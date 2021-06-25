@@ -4,6 +4,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\App\CountriesController;
 use App\Http\Controllers\App\SkillsController;
 use App\Http\Controllers\Experts\ExpertsController;
+use App\Http\Controllers\Clients\ClientsController;
 use App\Http\Controllers\Pages\PagesController;
 use App\Http\Controllers\Pages\HomePageController;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ Route::group([
     Route::post('/users/get', [UsersController::class, 'get']);
 
 
-    
+
      //Skill
     Route::post('/skills/get_data', [SkillsController::class, 'get_data']);
     Route::post('/skills/add', [SkillsController::class, 'add']);
@@ -77,10 +78,15 @@ Route::group([
     Route::post('/experts/add_expert_skills', [ExpertsController::class, 'addExpertSkills']);
     Route::post('/experts/change_expert_password', [ExpertsController::class, 'changeExpertPassword']);
 
-    //Pages 
+    //Pages
     Route::post('/pages/get_fields', [PagesController::class, 'get_fields']);
     Route::post('/pages/home/update_banner', [HomePageController::class, 'update_banner']);
     Route::post('/pages/home/delete_banner', [HomePageController::class, 'delete_banner']);
     Route::post('/pages/home/add_marketplace', [HomePageController::class, 'add_marketplace']);
+
+
+    //Clients
+    Route::post('/clients/register_new_client', [ClientsController::class, 'register_new_client']);
+
 
 });
