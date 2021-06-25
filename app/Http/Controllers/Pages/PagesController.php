@@ -15,7 +15,7 @@ class PagesController extends Controller
     public function __construct(){
         $this->global =  config('app.global');
     }
-  
+
 
     public function get_fields(Request $request) {
         $validator = Validator::make($request->all(),[
@@ -31,7 +31,7 @@ class PagesController extends Controller
             ];
             return response()->json($data, 400);
         }
-    
+
         $fields = PagesField::join('pages', 'pages_field.page_id', '=', 'pages.id')
         ->select('pages.name','pages.id as p_id', 'pages_field.*')
         ->get();
@@ -43,7 +43,7 @@ class PagesController extends Controller
 
     public function uploadfile_to_s3($base64,$file_name,$path)
     {
-        
+
        $result = false;
        if ($base64) {
             //$base64 = $request->file;
@@ -60,7 +60,7 @@ class PagesController extends Controller
             if (Storage::disk('s3')->put($path.'/'.$name,$imageData,'public')) {
                 $result = $this->global['aws_s3_base'].$path.'/'.$name;
             }
-            
+
        }
        return $result;
     }
