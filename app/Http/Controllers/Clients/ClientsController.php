@@ -49,7 +49,6 @@ class ClientsController extends Controller
             'mobile_number' => 'required|string',
         ]);
 
-
         if($validator->fails()){
             $validators=$validator->errors()->toArray();
             $data=[
@@ -80,6 +79,10 @@ class ClientsController extends Controller
         //     ]
 
         // ));
+        return response()->json([
+            'message' => 'Expert`s Education successfully created',
+            'ExpertsEducation' => ''
+        ], 201);
     }
 
     public function addExpertEducation(Request $request) {
