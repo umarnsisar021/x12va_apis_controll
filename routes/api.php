@@ -73,10 +73,14 @@ Route::group([
     Route::post('/experts/updateEducation', [ExpertsController::class, 'updateEducation']);
     Route::post('/experts/add_expert_education', [ExpertsController::class, 'addExpertEducation']);
     Route::post('/experts/delete_expert_education', [ExpertsController::class, 'deleteExpertEducation']);
+    Route::post('/experts/add_expert_tool', [ExpertsController::class, 'addExpertTool']);
     Route::post('/experts/delete_expert_skill', [ExpertsController::class, 'deleteExpertSkill']);
     Route::post('/experts/delete_expert_tool', [ExpertsController::class, 'deleteExpertTool']);
     Route::post('/experts/add_expert_skills', [ExpertsController::class, 'addExpertSkills']);
     Route::post('/experts/change_expert_password', [ExpertsController::class, 'changeExpertPassword']);
+
+
+
 
     //Pages
     Route::post('/pages/get_fields', [PagesController::class, 'get_fields']);

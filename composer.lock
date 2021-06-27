@@ -64,6 +64,18 @@
         },
         {
             "name": "aws/aws-sdk-php",
+<<<<<<< HEAD
+            "version": "3.185.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/aws/aws-sdk-php.git",
+                "reference": "953bbd1b5f7fd3f1601ad0a83f93358f635c57f4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/953bbd1b5f7fd3f1601ad0a83f93358f635c57f4",
+                "reference": "953bbd1b5f7fd3f1601ad0a83f93358f635c57f4",
+=======
             "version": "3.185.2",
             "source": {
                 "type": "git",
@@ -74,6 +86,7 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/0e6ece3f9c4ab26bb20183c697fd36e1d55c1053",
                 "reference": "0e6ece3f9c4ab26bb20183c697fd36e1d55c1053",
+>>>>>>> fe1029f20df1b882eca5b266dd6e0bbc8dfb0a2a
                 "shasum": ""
             },
             "require": {
@@ -148,9 +161,15 @@
             "support": {
                 "forum": "https://forums.aws.amazon.com/forum.jspa?forumID=80",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
+<<<<<<< HEAD
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.185.1"
+            },
+            "time": "2021-06-24T18:22:42+00:00"
+=======
                 "source": "https://github.com/aws/aws-sdk-php/tree/3.185.2"
             },
             "time": "2021-06-25T18:19:14+00:00"
+>>>>>>> fe1029f20df1b882eca5b266dd6e0bbc8dfb0a2a
         },
         {
             "name": "brick/math",
@@ -948,6 +967,18 @@
         },
         {
             "name": "laravel/framework",
+<<<<<<< HEAD
+            "version": "v8.48.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/framework.git",
+                "reference": "edc138060a13c9e5f15c005fad5f6a39b4ccf5fa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/edc138060a13c9e5f15c005fad5f6a39b4ccf5fa",
+                "reference": "edc138060a13c9e5f15c005fad5f6a39b4ccf5fa",
+=======
             "version": "v8.48.2",
             "source": {
                 "type": "git",
@@ -958,6 +989,7 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/laravel/framework/zipball/4c50ebbb7d1a66c5f3511261413cd499d30ba4cd",
                 "reference": "4c50ebbb7d1a66c5f3511261413cd499d30ba4cd",
+>>>>>>> fe1029f20df1b882eca5b266dd6e0bbc8dfb0a2a
                 "shasum": ""
             },
             "require": {
@@ -1112,7 +1144,11 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
+<<<<<<< HEAD
+            "time": "2021-06-23T13:41:59+00:00"
+=======
             "time": "2021-06-25T23:57:38+00:00"
+>>>>>>> fe1029f20df1b882eca5b266dd6e0bbc8dfb0a2a
         },
         {
             "name": "laravel/tinker",
@@ -7830,5 +7866,5 @@
         "php": "^7.3|^8.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }

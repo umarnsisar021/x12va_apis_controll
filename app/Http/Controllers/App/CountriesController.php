@@ -19,7 +19,7 @@ class CountriesController extends Controller
         $search = request('q');
         $country = Countries::orderByDesc('id');
         if (!empty($search)) {
-            $user->where('name', 'like', '%' . $search . '%');
+            $country->where('name', 'like', '%' . $search . '%');
         }
 
         if (!empty($role)) {
