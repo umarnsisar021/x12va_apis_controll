@@ -13,10 +13,13 @@ use Validator;
 class UsersController extends Controller
 {
 
-    protected  $global;
-    public function __construct(){
-        $this->global =  config('app.global');
+    protected $global;
+
+    public function __construct()
+    {
+        $this->global = config('app.global');
     }
+
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);
@@ -37,7 +40,8 @@ class UsersController extends Controller
     }
 
 
-    public function add(Request $request) {
+    public function add(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
@@ -45,147 +49,145 @@ class UsersController extends Controller
             'role' => 'required|string|between:2,100',
         ]);
 
-        if($validator->fails()){
-            $validators=$validator->errors()->toArray();
-            $data=[
-                'validations'=>$validators,
-                'message'=>$validator->errors()->first()
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
             ];
             return response()->json($data, 400);
         }
 
 
-        
         $user = User::create(array_merge(
             $validator->validated(),
             ['password' => bcrypt($request->password),]
         ));
 
-        $avatar_name = 'user-'.$user->id;
+        $avatar_name = 'user-' . $user->id;
         $avatar = '';
         $request->avatar;
         if ($request->avatar) {
-         $avatar = $this->uploadfile_to_s3($request->avatar,$avatar_name,'avatars');
-         User::where('id', $user->id)->update(['avatar' => $avatar]);
-     }
+            $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
+            User::where('id', $user->id)->update(['avatar' => $avatar]);
+        }
 
-     
 
-     return response()->json([
-        'message' => 'User successfully created',
-        'user' => $user
-    ], 201);
- }
-
- public function update(Request $request)
- {
-    $rules = User::rules($request['id']);
-    $rules['id'] = ['required', 'exists:users,id'];
-    if (empty($request['password'])) {
-        unset($request['password']);
-        unset($rules['password']);
+        return response()->json([
+            'message' => 'User successfully created',
+            'user' => $user
+        ], 201);
     }
 
-    $validator = Validator::make($request->all(), $rules);
+    public function update(Request $request)
+    {
+        $rules = User::rules($request['id']);
+        $rules['id'] = ['required', 'exists:users,id'];
+        if (empty($request['password'])) {
+            unset($request['password']);
+            unset($rules['password']);
+        }
 
-    if($validator->fails()){
-        $validators=$validator->errors()->toArray();
-        $data=[
-            'validations'=>$validators,
-            'message'=>$validator->errors()->first()
-        ];
-        return response()->json($data, 400);
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $avatar_name = 'user-' . $request['id'];
+        $avatar = '';
+        $request->avatar;
+        if ($request->new_avatar) {
+            $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
+        }
+
+
+        $validator = $validator->validated();
+        $id = $validator['id'];
+
+        unset($validator['id']);
+        unset($validator['new_avatar']);
+        if ($request->new_avatar) {
+            $validator['avatar'] = $avatar;
+        }
+        User::where('id', $id)
+            ->update($validator);
+        return response()->json([
+            'message' => 'User successfully updated',
+            'user' => $validator
+        ], 201);
     }
 
-    $avatar_name = 'user-'.$request['id'];
-    $avatar = '';
-    $request->avatar;
-    if ($request->new_avatar) {
-     $avatar = $this->uploadfile_to_s3($request->avatar,$avatar_name,'avatars');
- }
 
+    public function delete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
 
- $validator= $validator->validated();
- $id = $validator['id'];
- 
- unset($validator['id']);
- unset($validator['new_avatar']);
- if ($request->new_avatar) {
-  $validator['avatar'] = $avatar;
-}
-User::where('id', $id)
-->update($validator);
-return response()->json([
-    'message' => 'User successfully updated',
-    'user' => $validator
-], 201);
-}
-
-
-public function delete(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'id' => 'required',
-    ]);
-    if($validator->fails()){
-        $validators=$validator->errors()->toArray();
-        $data=[
-            'validations'=>$validators,
-            'message'=>$validator->errors()->first()
-        ];
-        return response()->json($data, 400);
+        $user = User::find($request['id']);
+        $user->delete();
+        return response()->json([
+            'message' => 'User successfully deleted'
+        ], 201);
     }
 
-    $user = User::find($request['id']);
-    $user->delete();
-    return response()->json([
-        'message' => 'User successfully deleted'
-    ], 201);
-}
 
+    public function get(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
 
-public function get(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'id' => 'required',
-    ]);
-    if($validator->fails()){
-        $validators=$validator->errors()->toArray();
-        $data=[
-            'validations'=>$validators,
-            'message'=>$validator->errors()->first()
-        ];
-        return response()->json($data, 400);
+        $user = User::find($request['id']);
+        return response()->json([
+            'message' => 'Get User successfully',
+            'user' => $user
+        ], 201);
     }
 
-    $user = User::find($request['id']);
-    return response()->json([
-        'message' => 'Get User successfully',
-        'user' => $user
-    ], 201);
-}
+    public function uploadfile_to_s3($base64, $file_name, $path)
+    {
 
-public function uploadfile_to_s3($base64,$file_name,$path)
-{
-    
- $result = false;
- if ($base64) {
+        $result = false;
+        if ($base64) {
             //$base64 = $request->file;
-   $imageData = str_replace(' ', '+', $base64);
-   list($type, $imageData) = explode(';', $imageData);
-   list(, $extension) = explode('/', $type);
-   list(, $imageData) = explode(',', $imageData);
-   if ($extension == 'svg+xml') {
-    $extension = 'svg';
-}
-$name = $file_name . "." . $extension;
-$imageData = base64_decode($imageData);
+            $imageData = str_replace(' ', '+', $base64);
+            list($type, $imageData) = explode(';', $imageData);
+            list(, $extension) = explode('/', $type);
+            list(, $imageData) = explode(',', $imageData);
+            if ($extension == 'svg+xml') {
+                $extension = 'svg';
+            }
+            $name = $file_name . "." . $extension;
+            $imageData = base64_decode($imageData);
 
-if (Storage::disk('s3')->put($path.'/'.$name,$imageData,'public')) {
-    $result = $this->global['aws_s3_base'].$path.'/'.$name;
-}
+            if (Storage::disk('s3')->put($path . '/' . $name, $imageData, 'public')) {
+                $result = $this->global['aws_s3_base'] . $path . '/' . $name;
+            }
 
-}
-return $result;
-}
+        }
+        return $result;
+    }
 }

@@ -19,6 +19,7 @@ class ClientsController extends Controller
         $this->global = config('app.global');
     }
 
+
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);
@@ -34,6 +35,205 @@ class ClientsController extends Controller
 
         $clients = $clients->paginate($perPage);
         return response()->json($clients);
+    }
+
+
+
+    public function login(Request $request)
+    {
+
+
+        if ($request->type == 0) {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required|string|min:6',
+            ]);
+        } elseif ($request->type == 1) {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string',
+                'first_name' => 'required|string|between:2,100',
+                'last_name' => 'required|string|between:2,100',
+                'avatar' => 'required|string',
+                'google_id' => 'required|string'
+            ]);
+        } elseif ($request->type == 2) {
+            $validator = Validator::make($request->all(), [
+                'email' => 'string',
+                'first_name' => 'required|string|between:2,100',
+                'last_name' => 'required|string|between:2,100',
+                'avatar' => 'required|string',
+                'facebook_id' => 'required|string'
+            ]);
+        }
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        if ($request->type == 0) {
+            $member_record = Members::where('email', '=', $request->email)->get();
+            if (count($member_record) > 0) {
+                $member_record = $member_record[0];
+                if (!Hash::check($request->password, $member_record->password)) {
+                    return response()->json(['success' => false, 'message' => 'Login Fail, pls check password']);
+                }
+
+
+                $token = bin2hex(random_bytes(64));
+                $user_info=array(
+                    'first_name'=>$member_record->first_name,
+                    'last_name'=>$member_record->last_name,
+                    'email'=>$member_record->email,
+                    'is_seller'=>$member_record->is_seller,
+                    'is_buyer'=>$member_record->is_buyer,
+                    'mobile_no'=>$member_record->mobile_no,
+                    'username'=>$member_record->username,
+                );
+                Members::where('id', $member_record->id)
+                    ->update(['token' => $token]);
+                return response()->json([
+                    'message' => 'Account successfully login',
+                    'token' => $token,
+                    'user_info'=>$user_info
+                ], 201);
+            } else {
+                return response()->json([
+                    'message' => 'wrong username or password'
+                ], 400);
+            }
+        } elseif ($request->type == 1) {
+            $member_record = Members::where('google_id', '=', $request->google_id)->get();
+            if(count($member_record)>0){
+                $token = bin2hex(random_bytes(64));
+                $user_info=array(
+                    'id'=>$member_record->id,
+                    'first_name'=>$member_record->first_name,
+                    'last_name'=>$member_record->last_name,
+                    'email'=>$member_record->email,
+                    'is_seller'=>$member_record->is_seller,
+                    'is_buyer'=>$member_record->is_buyer,
+                    'mobile_no'=>$member_record->mobile_no,
+                    'username'=>$member_record->username
+                );
+                Members::where('id', $member_record->id)
+                    ->update(['token' => $token]);
+                return response()->json([
+                    'message' => 'Account successfully login',
+                    'token' => $token,
+                    'user_info'=>$user_info
+                ], 201);
+            }else{
+                DB::beginTransaction();
+                $member = Members::create(array_merge(
+                    $validator->validated(),
+                    [
+                        'email' => $request->email,
+                        'is_buyer' => 1,
+                        'google_id' => $request->google_id,
+                        'signup_with'=>1
+                    ]
+                ));
+                $b64image ="data:image/jpg;base64,". base64_encode(file_get_contents($request->avatar));
+//                $file_name=$member->id.uniqid('img_', true);
+                $avatar_name = 'user-' . $member->id;
+
+
+                $avatar=$this->uploadfile_to_s3($b64image,$avatar_name,'avatars');
+                $clients = Clients::create(array_merge(
+                    $validator->validated(),
+                    [
+                        'member_id' => $member->id,
+                        'first_name' => $request->first_name,
+                        'last_name' => $request->last_name,
+                        'email' => $request->email,
+                        'avatar'=>$avatar
+                    ]
+                ));
+                if (!$clients) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'info missing'
+                    ], 400);
+                }
+                DB::commit();
+
+                $token = bin2hex(random_bytes(64));
+                $user_info=array(
+                    'id'=>$member->id,
+                    'first_name'=>$clients->first_name,
+                    'last_name'=>$clients->last_name,
+                    'email'=>$clients->email,
+                    'is_seller'=>$member->is_seller,
+                    'is_buyer'=>$member->is_buyer,
+                    'mobile_no'=>'',
+                    'username'=>'',
+                );
+                Members::where('id', $member->id)
+                    ->update(['token' => $token]);
+                return response()->json([
+                    'message' => 'Account successfully login',
+                    'token' => $token,
+                    'user_info'=>$user_info
+                ], 201);
+            }
+        }
+
+        DB::beginTransaction();
+        $member = Members::create(array_merge(
+            $validator->validated(),
+            [
+                'username' => $request->username,
+                'email' => $request->email,
+                'is_buyer' => 1,
+                'password' => bcrypt($request->password)
+            ]
+        ));
+
+
+        $clients = Clients::create(array_merge(
+            $validator->validated(),
+            [
+                'member_id' => $member->id,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'd_o_b' => $request->d_o_b,
+                'gender' => $request->gender,
+                'email' => $request->email
+            ]
+        ));
+        if (!$clients) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'info missing'
+            ], 400);
+        }
+        DB::commit();
+        return response()->json([
+            'message' => 'Account successfully created'
+
+
+        ]);
+
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $ExpertsEducation = ExpertsEducation::create($validator->validated());
+        return response()->json([
+            'message' => 'Expert`s Education successfully created',
+            'ExpertsEducation' => $ExpertsEducation
+        ], 201);
     }
 
     public function register_new_client(Request $request)
@@ -70,19 +270,18 @@ class ClientsController extends Controller
         ));
 
 
-
-         $clients = Clients::create(array_merge(
-             $validator->validated(),
-             [
-                 'member_id'=>  $member->id,
-                 'first_name' => $request->first_name,
-                 'last_name' => $request->last_name,
-                 'd_o_b' => $request->d_o_b,
-                 'gender' => $request->gender,
-                 'email' => $request->email
-             ] 
-         ));
-        if(!$clients){
+        $clients = Clients::create(array_merge(
+            $validator->validated(),
+            [
+                'member_id' => $member->id,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'd_o_b' => $request->d_o_b,
+                'gender' => $request->gender,
+                'email' => $request->email
+            ]
+        ));
+        if (!$clients) {
             DB::rollBack();
             return response()->json([
                 'message' => 'info missing'

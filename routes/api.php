@@ -91,6 +91,24 @@ Route::group([
 
     //Clients
     Route::post('/clients/register_new_client', [ClientsController::class, 'register_new_client']);
+    Route::post('/clients/login', [ClientsController::class, 'login']);
 
 
+});
+
+
+
+Route::get('/clear', function() {
+    return "Cleared!";
+
+//    Artisan::call('storage:link');
+//    Artisan::call('cache:clear');
+//    Artisan::call('config:clear');
+//    Artisan::call('config:cache');
+//    Artisan::call('view:clear');
+    Artisan::call('route:cache');
+    Artisan::call('route:clear');
+
+    Artisan::call('optimize');
+    return "Cleared!";
 });
