@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Tasks\TasksController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\App\CountriesController;
 use App\Http\Controllers\App\SkillsController;
@@ -45,8 +46,7 @@ Route::group([
     Route::post('/users/get', [UsersController::class, 'get']);
 
 
-
-     //Skill
+    //Skill
     Route::post('/skills/get_data', [SkillsController::class, 'get_data']);
     Route::post('/skills/add', [SkillsController::class, 'add']);
     Route::post('/skills/update', [SkillsController::class, 'update']);
@@ -80,8 +80,6 @@ Route::group([
     Route::post('/experts/change_expert_password', [ExpertsController::class, 'changeExpertPassword']);
 
 
-
-
     //Pages
     Route::post('/pages/get_fields', [PagesController::class, 'get_fields']);
     Route::post('/pages/home/update_banner', [HomePageController::class, 'update_banner']);
@@ -89,16 +87,24 @@ Route::group([
     Route::post('/pages/home/add_marketplace', [HomePageController::class, 'add_marketplace']);
 
 
-    //Clients
-    Route::post('/clients/register_new_client', [ClientsController::class, 'register_new_client']);
-    Route::post('/clients/login', [ClientsController::class, 'login']);
+    Route::group([
+        'prefix' => 'web'
+    ], function ($router) {
+        //Clients
+        Route::post('/clients/register_new_client', [ClientsController::class, 'api_register']);
+        Route::post('/clients/login', [ClientsController::class, 'api_login']);
+        Route::post('/skills', [SkillsController::class, 'api_list']);
+        Route::post('/find_total_experts', [ExpertsController::class, 'api_find_total_experts']);
 
+        Route::post('/add_task', [TasksController::class, 'api_add_task']);
+
+
+    });
 
 });
 
 
-
-Route::get('/clear', function() {
+Route::get('/clear', function () {
     return "Cleared!";
 
 //    Artisan::call('storage:link');

@@ -9,6 +9,7 @@ use App\Models\Experts\ExpertsEducation;
 use App\Models\Experts\ExpertsSkills;
 use App\Models\Experts\ExpertsTools;
 use App\Models\Members\Members;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Validator;
@@ -59,16 +60,17 @@ class ExpertsController extends Controller
             ];
             return response()->json($data, 400);
         }
+        DB::beginTransaction();
 
         $member = Members::create(array_merge(
             $validator->validated(),
-            ['password' => bcrypt($request->password)]
+            ['password' => bcrypt($request->password),'is_seller'=>1]
         ));
 
        
         $avatar_name = $request->username.'-'.$member->id;
         $avatar = '';
-        $request->avatar;
+
         
         if ($request->avatar) {
            $avatar = $this->uploadfile_to_s3($request->avatar,$avatar_name,'avatars');
@@ -79,8 +81,17 @@ class ExpertsController extends Controller
                 'member_id'=>  $member->id,
                 'avatar' => $avatar,
             ]
-          
         ));
+
+        if (!$experts) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'info missing'
+            ], 400);
+        }
+
+        DB::commit();
+
     }
 
     public function addExpertEducation(Request $request) {
@@ -399,4 +410,28 @@ class ExpertsController extends Controller
     }
 
 
+    public function api_find_total_experts(Request $request)
+    {
+
+         $validator = Validator::make($request->all(), [
+             'skill_id' => 'required'
+         ]);
+
+         if ($validator->fails()) {
+             $validators = $validator->errors()->toArray();
+             $data = [
+                 'validations' => $validators,
+                 'message' => $validator->errors()->first()
+             ];
+             return response()->json($data, 400);
+         }
+
+        $records = Experts::where('experts_skills.id','=', $request->skill_id)
+            ->select('experts.id')
+            ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')->get()->count();
+
+        return response()->json([
+            'records' => $records
+        ], 201);
+    }
 }

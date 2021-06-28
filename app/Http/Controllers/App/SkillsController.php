@@ -180,4 +180,12 @@ class SkillsController extends Controller
             'skill' => $skill
         ], 201);
     }
+
+
+    public function api_list(){
+        $skills=Skills::all('id','name');
+        return response()->json([
+            'records' => $skills
+        ], 201);
+    }
 }
