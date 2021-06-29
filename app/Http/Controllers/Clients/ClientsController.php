@@ -1,11 +1,11 @@
 <?php
 namespace App\Http\Controllers\Clients;
 
+use App\Models\Experts\Experts;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Clients;
 use App\Models\Members\Members;
-use App\Models\Experts\Experts;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +14,6 @@ use Validator;
 
 class ClientsController extends Controller
 {
-
 
     public function get_data(Request $request)
     {
@@ -33,16 +32,19 @@ class ClientsController extends Controller
         return response()->json($clients);
     }
 
-
-
-
-
-
-    public function addExpertSkills(Request $request)
+    public function add(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'expert_id' => 'int|string',
-            'skill_id' => 'int',
+            'username' => 'required|string|between:2,100|unique:members',
+            'password' => 'required|string|max:100',
+            'email' => 'required|string|unique:members',
+            'first_name' => 'required|string|between:2,100',
+            'middle_name' => 'string|between:2,100',
+            'last_name' => 'required|string|between:2,100',
+            'd_o_b' => 'required|string',
+            'gender' => 'required|string',
+            'country' => 'required|string',
+            'mobile_number' => 'required|string',
         ]);
 
 
@@ -54,111 +56,43 @@ class ClientsController extends Controller
             ];
             return response()->json($data, 400);
         }
+        DB::beginTransaction();
 
-        $chck = ExpertsSkills::where('expert_id', '=', $request['expert_id'])
-            ->where('skill_id', '=', $request['skill_id'])->get();
+        $member = Members::create(array_merge(
+            $validator->validated(),
+            ['password' => bcrypt($request->password), 'is_buyer' => 1]
+        ));
 
-        if (count($chck) > 0) {
+
+        $avatar_name = $request->username . '-' . $member->id;
+        $avatar = '';
+
+
+        if ($request->avatar) {
+            $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
+        }
+        $clients = Clients::create(array_merge(
+            $validator->validated(),
+            [
+                'member_id' => $member->id,
+                'avatar' => $avatar,
+            ]
+        ));
+
+        if (!$clients) {
+            DB::rollBack();
             return response()->json([
-                'message' => 'Selected skill already exsist.',
-            ], 202);
-        } else {
-            $ExpertsSkills = ExpertsSkills::create($validator->validated());
-            $skills = ExpertsSkills::where('expert_id', '=', $request['expert_id'])
-                ->join('skills', 'experts_skills.skill_id', '=', 'skills.id')
-                ->select('experts_skills.*', 'skills.name', 'skills.short_code')
-                ->get();
-            return response()->json([
-                'message' => 'Expert`s Skill successfully created',
-                'skills' => $skills
-            ], 201);
+                'message' => 'info missing'
+            ], 400);
         }
 
-
-    }
-
-    public function addExpertTool(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'expert_id' => 'required|string',
-            'name' => 'required|string|between:2,100',
-        ]);
-
-
-        if ($validator->fails()) {
-            $validators = $validator->errors()->toArray();
-            $data = [
-                'validations' => $validators,
-                'message' => $validator->errors()->first()
-            ];
-            return response()->json($data, 400);
-        }
-
-        $chck = ExpertsTools::where('expert_id', '=', $request['expert_id'])
-            ->where('name', '=', $request['name'])->get();
-
-        if (count($chck) > 0) {
-            return response()->json([
-                'message' => 'Already exsist.',
-            ], 202);
-        } else {
-            $ExpertsTools = ExpertsTools::create($validator->validated());
-            $tool = ExpertsTools::where('expert_id', '=', $request['expert_id'])
-                ->get();
-            return response()->json([
-                'message' => 'Expert`s Skill successfully created',
-                'skills' => $tool
-            ], 201);
-        }
-
-
-    }
-
-    public function update(Request $request)
-    {
-        $rules = Experts::rules($request['id']);
-        $rules['id'] = ['required', 'exists:experts,id'];
-        if (empty($request['password'])) {
-            unset($request['password']);
-            unset($rules['password']);
-        }
-        if (empty($request['status'])) {
-            unset($request['status']);
-            unset($rules['status']);
-        }
-
-        $validator = Validator::make($request->all(), $rules);
-
-
-        $validator = $validator->validated();
-        $id = $validator['id'];
-        unset($validator['id']);
-        Experts::where('id', $id)
-            ->update($validator);
+        DB::commit();
         return response()->json([
-            'message' => 'Data successfully updated',
-            'expert' => $validator
+            'message' => 'Data successfully added',
+            'record' => $clients
         ], 201);
+
     }
-
-
-    public function updateEducation(Request $request)
-    {
-        $rules = ExpertsEducation::rules($request['id']);
-        $rules['id'] = ['required', 'exists:experts_education,id'];
-
-        $validator = Validator::make($request->all(), $rules);
-        $validator = $validator->validated();
-        $id = $validator['id'];
-        unset($validator['id']);
-        ExpertsEducation::where('id', $id)
-            ->update($validator);
-        return response()->json([
-            'message' => 'Data successfully updated',
-            'ExpertsEducation' => $validator
-        ], 201);
-    }
-
 
     public function delete(Request $request)
     {
@@ -174,79 +108,40 @@ class ClientsController extends Controller
             return response()->json($data, 400);
         }
 
-        $user = Experts::find($request['id']);
+        $user = Clients::find($request['id']);
         $user->delete();
         return response()->json([
-            'message' => 'Expert successfully deleted'
+            'message' => 'Record successfully deleted'
         ], 201);
     }
 
-    public function deleteExpertEducation(Request $request)
+    public function update(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required',
-        ]);
-        if ($validator->fails()) {
-            $validators = $validator->errors()->toArray();
-            $data = [
-                'validations' => $validators,
-                'message' => $validator->errors()->first()
-            ];
-            return response()->json($data, 400);
+        $rules = Clients::rules($request['id']);
+        $rules['id'] = ['required', 'exists:clients,id'];
+        if (empty($request['password'])) {
+            unset($request['password']);
+            unset($rules['password']);
+        }
+        if (empty($request['status'])) {
+            unset($request['status']);
+            unset($rules['status']);
         }
 
-        $ExpertsEducation = ExpertsEducation::find($request['id']);
-        $ExpertsEducation->delete();
+        $validator = Validator::make($request->all(), $rules);
+
+
+        $validator = $validator->validated();
+        $id = $validator['id'];
+        unset($validator['id']);
+        Clients::where('id', $id)
+            ->update($validator);
         return response()->json([
-            'message' => 'Expert Education successfully deleted'
+            'message' => 'Record successfully updated',
+            'record' => $validator
         ], 201);
     }
-
-
-    public function deleteExpertSkill(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required',
-        ]);
-        if ($validator->fails()) {
-            $validators = $validator->errors()->toArray();
-            $data = [
-                'validations' => $validators,
-                'message' => $validator->errors()->first()
-            ];
-            return response()->json($data, 400);
-        }
-
-        $ExpertsSkills = ExpertsSkills::find($request['id']);
-        $ExpertsSkills->delete();
-        return response()->json([
-            'message' => 'Skill successfully deleted'
-        ], 201);
-    }
-
-    public function deleteExpertTool(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required',
-        ]);
-        if ($validator->fails()) {
-            $validators = $validator->errors()->toArray();
-            $data = [
-                'validations' => $validators,
-                'message' => $validator->errors()->first()
-            ];
-            return response()->json($data, 400);
-        }
-
-        $ExpertsSkills = ExpertsTools::find($request['id']);
-        $ExpertsSkills->delete();
-        return response()->json([
-            'message' => 'Tool successfully deleted'
-        ], 201);
-    }
-
-
-    public function changeExpertPassword(Request $request)
+    public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required',
@@ -268,6 +163,7 @@ class ClientsController extends Controller
         ], 201);
     }
 
+
     public function get(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -282,24 +178,15 @@ class ClientsController extends Controller
             return response()->json($data, 400);
         }
 
-        $expert = Experts::find($request['id']);
-        $member = Members::find($expert['member_id']);
-        $education = ExpertsEducation::where('expert_id', '=', $expert['id'])->get();
-        $skills = ExpertsSkills::where('expert_id', '=', $expert['id'])
-            ->join('skills', 'experts_skills.skill_id', '=', 'skills.id')
-            ->select('experts_skills.*', 'skills.name', 'skills.short_code')
-            ->get();
-        $tools = ExpertsTools::where('expert_id', '=', $expert['id'])->get();
+        $client = Clients::find($request['id']);
+        $member = Members::find($client['member_id']);
+
         return response()->json([
-            'message' => 'Get Expert successfully',
+            'message' => 'Get Record successfully',
             'member' => $member,
-            'expert' => $expert,
-            'education' => $education,
-            'skills' => $skills,
-            'tools' => $tools
+            'record' => $client
         ], 201);
     }
-
 
 
 
@@ -318,7 +205,7 @@ class ClientsController extends Controller
                 'email' => 'required|string',
                 'first_name' => 'required|string|between:2,100',
                 'last_name' => 'required|string|between:2,100',
-                'avatar' => 'required|string',
+                'avatar' => '',
                 'google_id' => 'required|string'
             ]);
         } elseif ($request->type == 2) {
@@ -379,16 +266,15 @@ class ClientsController extends Controller
                 ], 400);
             }
         } elseif ($request->type == 1) {
-            $member_record = Members::where('google_id', '=', $request->google_id)->get();
-            if(count($member_record)>0){
+            $member_record = Members::where('google_id', '=', $request->google_id)->get()->first();
+            if($member_record){
                 $token = bin2hex(random_bytes(64));
-
                 $user_record=array();
                 if($member_record->is_seller==1){
-                    $user_record=  Experts::where('member_id', '=', $member_record->id)->get();
+                    $user_record=  Experts::where('member_id', '=', $member_record->id)->get()->first();
                 }
-                if($member_record->is_seller==1){
-                    $user_record=  Clients::where('member_id', '=', $member_record->id)->get();
+                if($member_record->is_buyer==1){
+                    $user_record=  Clients::where('member_id', '=', $member_record->id)->get()->first();
                 }
 
                 $user_info=array(
@@ -419,7 +305,11 @@ class ClientsController extends Controller
                         'signup_with'=>1
                     ]
                 ));
-                $b64image ="data:image/jpg;base64,". base64_encode(file_get_contents($request->avatar));
+
+                $b64image='';
+                if(isset($request->avatar) && !empty($request->avatar)){
+                    $b64image ="data:image/jpg;base64,". base64_encode(file_get_contents($request->avatar));
+                }
 //                $file_name=$member->id.uniqid('img_', true);
                 $avatar_name = 'user-' . $member->id;
 
@@ -464,43 +354,14 @@ class ClientsController extends Controller
             }
         }
 
-        DB::beginTransaction();
-        $member = Members::create(array_merge(
-            $validator->validated(),
-            [
-                'username' => $request->username,
-                'email' => $request->email,
-                'is_buyer' => 1,
-                'password' => bcrypt($request->password)
-            ]
-        ));
-
-
-        $clients = Clients::create(array_merge(
-            $validator->validated(),
-            [
-                'member_id' => $member->id,
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'd_o_b' => $request->d_o_b,
-                'gender' => $request->gender,
-                'email' => $request->email
-            ]
-        ));
-        if (!$clients) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'info missing'
-            ], 400);
-        }
-        DB::commit();
         return response()->json([
-            'message' => 'Account successfully created'
-        ]);
+            'message' => 'info missing'
+        ], 400);
     }
 
     public function api_register(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'username' => 'required|string|between:2,100|unique:members',
             'password' => 'required|string|max:100',
@@ -553,10 +414,16 @@ class ClientsController extends Controller
         DB::commit();
         return response()->json([
             'message' => 'Account successfully created'
-
-
         ]);
 
+    }
+
+
+    public function api_logout(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
 
         if ($validator->fails()) {
             $validators = $validator->errors()->toArray();
@@ -567,11 +434,34 @@ class ClientsController extends Controller
             return response()->json($data, 400);
         }
 
-        $ExpertsEducation = ExpertsEducation::create($validator->validated());
-        return response()->json([
-            'message' => 'Expert`s Education successfully created',
-            'ExpertsEducation' => $ExpertsEducation
-        ], 201);
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $member=Members::where('id', $member_record->id)
+            ->update(['token'=>null]);
+
+        if ($member) {
+
+            DB::commit();
+            return response()->json([
+                'message' => 'logout successfully'
+            ], 201);
+
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+
+
     }
+
 
 }

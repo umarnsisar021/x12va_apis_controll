@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 28, 2021 at 11:59 PM
+-- Generation Time: Jun 29, 2021 at 11:29 PM
 -- Server version: 10.4.18-MariaDB
 -- PHP Version: 7.4.16
 
@@ -102,7 +102,8 @@ CREATE TABLE `tbl_clients` (
 
 INSERT INTO `tbl_clients` (`id`, `member_id`, `first_name`, `middle_name`, `last_name`, `d_o_b`, `gender`, `email`, `mobile_number`, `country`, `region`, `info`, `score`, `avatar`, `created_at`, `updated_at`, `status`) VALUES
 (8, '15', 'salal', NULL, 'khan', '1996-06-01', 'male', 'salal.khan91@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, '2021-06-28 13:30:24', '2021-06-28 13:30:24', 0),
-(9, '16', 'UMAR', NULL, 'NISAR', NULL, NULL, 'umarnisar021@gmail.com', NULL, NULL, NULL, NULL, NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/user-16.jpg', '2021-06-28 13:43:03', '2021-06-28 13:43:03', 0);
+(19, '28', 'UMAR', NULL, 'NISAR', NULL, NULL, 'umarnisar021@gmail.com', NULL, NULL, NULL, NULL, NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/user-28.jpg', '2021-06-29 15:30:41', '2021-06-29 15:30:41', 0),
+(22, '31', 'bilal', NULL, 'siddique', '2021-06-04', 'Male', 'bilal@gmail.com', '921230021222', 'Pakistan', NULL, 'test', NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/bilal-31.png', '2021-06-29 16:02:20', '2021-06-29 16:28:53', 0);
 
 -- --------------------------------------------------------
 
@@ -163,7 +164,7 @@ INSERT INTO `tbl_experts` (`id`, `member_id`, `first_name`, `middle_name`, `last
 (2, '4', 'waqas', NULL, 'rajput', '1990-06-01', 'Male', 'waqas@gmail.com', '923322503077', 'Pakistan', NULL, NULL, NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/waqas-4.png', '2021-06-28 11:02:37', '2021-06-28 11:02:37', 0),
 (3, '6', 'samad', NULL, 'khan', '1997-06-06', 'Male', 'samad@gmail.com', '92333333333', 'Pakistan', NULL, NULL, NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/samad-6.png', '2021-06-28 12:02:43', '2021-06-28 12:02:43', 0),
 (4, '7', 'shaheer', NULL, 'khan', '1993-06-04', 'Male', 'shaheer@gmail.com', '92222222222', 'Pakistan', NULL, 'test', NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/shaheer-7.jpeg', '2021-06-28 12:04:55', '2021-06-28 15:16:11', 0),
-(5, '17', 'kamran', NULL, 'khan', '1992-06-03', 'Male', 'kamran@gmail.com', '9200000000', 'Pakistan', NULL, 'test', NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/kamran-17.jpeg', '2021-06-28 15:18:04', '2021-06-28 15:28:35', 0);
+(5, '17', 'kamran', NULL, 'khan', '1992-06-03', 'Male', 'kamran@gmail.com', '9200000000', 'Pakistan', NULL, 'test', NULL, 'https://x12va.s3.ap-south-1.amazonaws.com/avatars/kamran-17.jpeg', '2021-06-28 15:18:04', '2021-06-29 16:20:44', 0);
 
 -- --------------------------------------------------------
 
@@ -221,8 +222,8 @@ CREATE TABLE `tbl_experts_proposals` (
 
 CREATE TABLE `tbl_experts_skills` (
   `id` int(11) NOT NULL,
-  `expert_id` varchar(50) NOT NULL,
-  `skill_id` varchar(250) NOT NULL,
+  `expert_id` int(11) DEFAULT NULL,
+  `skill_id` int(11) DEFAULT NULL,
   `star` varchar(250) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -234,9 +235,9 @@ CREATE TABLE `tbl_experts_skills` (
 --
 
 INSERT INTO `tbl_experts_skills` (`id`, `expert_id`, `skill_id`, `star`, `created_at`, `updated_at`, `status`) VALUES
-(1, '4', '12', '0', '2021-06-28 12:05:30', '2021-06-28 12:05:30', 0),
-(2, '3', '6', '0', '2021-06-28 12:06:35', '2021-06-28 12:06:35', 0),
-(3, '2', '11', '0', '2021-06-28 12:07:11', '2021-06-28 12:07:11', 0);
+(1, 4, 12, '0', '2021-06-28 12:05:30', '2021-06-28 12:05:30', 0),
+(2, 3, 6, '0', '2021-06-28 12:06:35', '2021-06-28 12:06:35', 0),
+(3, 2, 6, '0', '2021-06-28 12:07:11', '2021-06-28 12:07:11', 0);
 
 -- --------------------------------------------------------
 
@@ -300,8 +301,37 @@ INSERT INTO `tbl_members` (`id`, `username`, `password`, `email`, `mobile_no`, `
 (6, 'samad', '$2y$10$vzLgdmiWFr7PNlzd2hjjKeC68VorWz6XIL5NJjWfKrMzxhHP9GXnG', 'samad@gmail.com', NULL, 0, 0, 0, NULL, NULL, NULL, '2021-06-28 12:02:42', '2021-06-28 12:02:42', 0, NULL),
 (7, 'shaheer', '$2y$10$o6yQSww32yT2foI/dC3Wfebbuw.z/2KfnjU/pSLM7OLvDWBpMdRxu', 'shaheer@gmail.com', NULL, 0, 0, 0, NULL, NULL, NULL, '2021-06-28 12:04:54', '2021-06-28 12:04:54', 0, NULL),
 (15, 'salal', '$2y$10$EkORC8URnPo8SlEkN95Q.OgtV1OzdCxU/PL/WLXklVpZVsrjlXgm2', 'salal.khan91@gmail.com', NULL, 0, 0, 0, NULL, NULL, NULL, '2021-06-28 13:30:23', '2021-06-28 13:30:23', 0, NULL),
-(16, NULL, NULL, 'umarnisar021@gmail.com', NULL, 0, 0, 0, NULL, NULL, NULL, '2021-06-28 13:43:01', '2021-06-28 13:43:03', 0, '35a44fc46f03f79279606bd67fa3a7b10ffed518592f461a67f6ef20696ce513fbcacbdfbf0c70fd4e36debce8a3643a2e7efc0cd35a35d52b23aafb08604845'),
-(17, 'kamran', '$2y$10$Amw6TeQiB2AoOxyJlLGmG.jKPSrPasRGnUSsDtfSW8BqeEn.mu.KK', 'kamran@gmail.com', NULL, 0, 0, 0, NULL, NULL, NULL, '2021-06-28 15:18:03', '2021-06-28 15:18:03', 0, NULL);
+(17, 'kamran', '$2y$10$Amw6TeQiB2AoOxyJlLGmG.jKPSrPasRGnUSsDtfSW8BqeEn.mu.KK', 'kamran@gmail.com', NULL, 0, 0, 0, NULL, NULL, NULL, '2021-06-28 15:18:03', '2021-06-28 15:18:03', 0, NULL),
+(28, NULL, NULL, 'umarnisar021@gmail.com', NULL, 0, 1, 1, '113911093600770507647', NULL, NULL, '2021-06-29 15:30:40', '2021-06-29 15:58:03', 0, '765fab1f840492fc2c122f521139e330edf68cd2e49c2c1f17f26bd3643d8ed0910e49190eaf9564643dfff4f505ce34544bf5ea411e57952d55135c7e3a003c'),
+(31, 'bilal', '$2y$10$3NEId2RxVOh.tqeRh3xgW.56w9bYYOjSAPSYhgmf0G7ufW2IZA.cm', 'bilal@gmail.com', NULL, 0, 1, 0, NULL, NULL, NULL, '2021-06-29 16:02:19', '2021-06-29 16:02:19', 0, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_notifications`
+--
+
+CREATE TABLE `tbl_notifications` (
+  `id` int(11) NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `message` text DEFAULT NULL,
+  `type` tinyint(4) DEFAULT 0 COMMENT '1 task send',
+  `primary_id` int(11) DEFAULT NULL COMMENT 'primary id is a parent table id',
+  `member_id` int(11) DEFAULT NULL,
+  `view` tinyint(4) DEFAULT 0,
+  `notify` tinyint(4) DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `tbl_notifications`
+--
+
+INSERT INTO `tbl_notifications` (`id`, `title`, `message`, `type`, `primary_id`, `member_id`, `view`, `notify`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'New Task Received', 'test', 1, 43, 4, 0, 0, '2021-06-29 13:50:52', '2021-06-29 13:50:52', NULL),
+(2, 'New Task Received', 'test', 1, 43, 6, 0, 0, '2021-06-29 13:50:52', '2021-06-29 13:50:52', NULL);
 
 -- --------------------------------------------------------
 
@@ -404,32 +434,21 @@ CREATE TABLE `tbl_tasks` (
   `days` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `status` tinyint(4) DEFAULT 0 COMMENT '0 = new task\r\n1 = Assigned\r\n3 = completed\r\n4 = canceled'
+  `status` tinyint(4) DEFAULT 0 COMMENT '0 = new task\r\n1 = Assigned\r\n3 = completed\r\n4 = canceled',
+  `skill_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `tbl_tasks`
 --
 
-INSERT INTO `tbl_tasks` (`id`, `task_id`, `client_id`, `assigned_to`, `description`, `document`, `days`, `created_at`, `updated_at`, `status`) VALUES
-(38, NULL, '16', 0, 'test', NULL, '2', '2021-06-28 16:08:24', '2021-06-28 16:08:24', 0),
-(39, NULL, '16', 0, 'test', NULL, '2', '2021-06-28 16:08:50', '2021-06-28 16:08:50', 0),
-(40, NULL, '16', 0, 'test', 'https://x12va.s3.ap-south-1.amazonaws.com/documents/1660da3ca36206b7.89565175.jpg', '2', '2021-06-28 16:18:28', '2021-06-28 16:18:28', 0);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `tbl_tasks_sended`
---
-
-CREATE TABLE `tbl_tasks_sended` (
-  `id` int(11) NOT NULL,
-  `task_id` varchar(50) NOT NULL,
-  `expert_id` varchar(256) NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  `status` tinyint(4) NOT NULL DEFAULT 0 COMMENT '0 = new task\r\n1 = closed\r\n'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT INTO `tbl_tasks` (`id`, `task_id`, `client_id`, `assigned_to`, `description`, `document`, `days`, `created_at`, `updated_at`, `status`, `skill_id`) VALUES
+(38, NULL, '16', 0, 'test', NULL, '2', '2021-06-28 16:08:24', '2021-06-28 16:08:24', 0, NULL),
+(39, NULL, '16', 0, 'test', NULL, '2', '2021-06-28 16:08:50', '2021-06-28 16:08:50', 0, NULL),
+(40, NULL, '16', 0, 'test', 'https://x12va.s3.ap-south-1.amazonaws.com/documents/1660da3ca36206b7.89565175.jpg', '2', '2021-06-28 16:18:28', '2021-06-28 16:18:28', 0, NULL),
+(41, NULL, '16', 0, 'test', 'https://x12va.s3.ap-south-1.amazonaws.com/documents/1660db6afeed1873.17992456.jpg', '2', '2021-06-29 13:48:33', '2021-06-29 13:48:33', 0, NULL),
+(42, NULL, '16', 0, 'test', 'https://x12va.s3.ap-south-1.amazonaws.com/documents/1660db6b53a85b72.75438652.jpg', '2', '2021-06-29 13:49:56', '2021-06-29 13:49:56', 0, NULL),
+(43, NULL, '16', 0, 'test', 'https://x12va.s3.ap-south-1.amazonaws.com/documents/1660db6b8c4eb8d6.24939826.jpg', '2', '2021-06-29 13:50:52', '2021-06-29 13:50:52', 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -581,6 +600,12 @@ ALTER TABLE `tbl_members`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `tbl_notifications`
+--
+ALTER TABLE `tbl_notifications`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `tbl_pages`
 --
 ALTER TABLE `tbl_pages`
@@ -602,12 +627,6 @@ ALTER TABLE `tbl_skills`
 -- Indexes for table `tbl_tasks`
 --
 ALTER TABLE `tbl_tasks`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `tbl_tasks_sended`
---
-ALTER TABLE `tbl_tasks_sended`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -637,7 +656,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `tbl_clients`
 --
 ALTER TABLE `tbl_clients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `tbl_countries`
@@ -685,7 +704,13 @@ ALTER TABLE `tbl_experts_tools`
 -- AUTO_INCREMENT for table `tbl_members`
 --
 ALTER TABLE `tbl_members`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+
+--
+-- AUTO_INCREMENT for table `tbl_notifications`
+--
+ALTER TABLE `tbl_notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `tbl_pages`
@@ -709,13 +734,7 @@ ALTER TABLE `tbl_skills`
 -- AUTO_INCREMENT for table `tbl_tasks`
 --
 ALTER TABLE `tbl_tasks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
-
---
--- AUTO_INCREMENT for table `tbl_tasks_sended`
---
-ALTER TABLE `tbl_tasks_sended`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `tbl_users`

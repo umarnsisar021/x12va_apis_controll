@@ -21,11 +21,18 @@ class Members extends Authenticatable implements JWTSubject
      */
 
     protected $fillable = [
+        'is_buyer',
+        'is_seller',
         'username',
         'password',
         'email',
         'mobile_no',
         'status',
+        'google_id',
+        'facebook_id',
+        'twitter_id',
+        'signup_with',
+        'token'
     ];
 
     /**
