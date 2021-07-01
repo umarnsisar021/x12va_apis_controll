@@ -21,6 +21,7 @@ class Clients extends Authenticatable implements JWTSubject
      */
     protected $fillable = [
             'member_id' ,
+            'username',
             'first_name',
             'last_name',
             'd_o_b',
@@ -77,6 +78,7 @@ class Clients extends Authenticatable implements JWTSubject
     {
         return [
             'member_id' => 'required|string|between:2,100',
+            'username'=> 'required|string|between:2,20',
             'first_name' => 'required|string|between:2,50',
             'last_name' => 'required|string',
             'd_o_b' => 'required|string',

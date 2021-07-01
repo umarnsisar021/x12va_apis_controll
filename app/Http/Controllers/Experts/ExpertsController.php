@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Experts;
 
+use App\Models\App\Skills;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Experts\Experts;
@@ -442,6 +443,52 @@ class ExpertsController extends Controller
 
         return response()->json([
             'records' => $records
+        ], 201);
+    }
+
+
+    public function api_get_skills_with_experts()
+    {
+        $skills = Skills::where('status', 0)->select('id', 'name', 'short_code')->get();
+        foreach ($skills as $index => $skill) {
+            $skills[$index]['experts'] = Experts::where('experts.status', 0)
+                ->select('first_name', 'last_name', 'experts.id', 'avatar')
+                ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')
+                ->where('experts_skills.skill_id', $skill->id)->limit(10)->get();
+        }
+        return response()->json([
+            'records' => $skills
+        ], 201);
+    }
+
+
+    public function api_get_experts_public_profile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'expert_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+        $expert = Experts::where('id', $request->expert_id)->first();
+        if (!$expert) {
+            return response()->json([
+                'message' => 'Expert Not Found'
+            ], 400);
+        }
+        $skills = Skills::where('skills.status', 0)
+            ->select('skills.id', 'skills.name', 'skills.short_code')
+            ->leftjoin('experts_skills', 'experts_skills.skill_id', '=', 'skills.id')
+            ->where('experts_skills.expert_id', $expert->id)->get();
+        return response()->json([
+            'expert_detail' => $expert,
+            'skills'=>$skills
         ], 201);
     }
 }

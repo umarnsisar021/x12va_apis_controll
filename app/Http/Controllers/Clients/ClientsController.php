@@ -141,28 +141,6 @@ class ClientsController extends Controller
             'record' => $validator
         ], 201);
     }
-    public function changePassword(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required',
-            'new_password' => 'required',
-        ]);
-        if ($validator->fails()) {
-            $validators = $validator->errors()->toArray();
-            $data = [
-                'validations' => $validators,
-                'message' => $validator->errors()->first()
-            ];
-            return response()->json($data, 400);
-        }
-        $id = $request->id;
-        Members::where('id', $id)
-            ->update(['password' => bcrypt($request->new_password)]);
-        return response()->json([
-            'message' => 'Password successfully updated.'
-        ], 201);
-    }
-
 
     public function get(Request $request)
     {
@@ -185,6 +163,29 @@ class ClientsController extends Controller
             'message' => 'Get Record successfully',
             'member' => $member,
             'record' => $client
+        ], 201);
+    }
+
+
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'new_password' => 'required',
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+        $id = $request->id;
+        Members::where('id', $id)
+            ->update(['password' => bcrypt($request->new_password)]);
+        return response()->json([
+            'message' => 'Password successfully updated.'
         ], 201);
     }
 
@@ -228,19 +229,18 @@ class ClientsController extends Controller
         }
 
         if ($request->type == 0) {
-            $member_record = Members::where('email', '=', $request->email)->get();
-            if (count($member_record) > 0) {
-                $member_record = $member_record[0];
+            $member_record = Members::where('email', '=', $request->email)->first();
+            if ($member_record) {
                 if (!Hash::check($request->password, $member_record->password)) {
                     return response()->json(['success' => false, 'message' => 'Login Fail, pls check password']);
                 }
 
                 $user_record=array();
                 if($member_record->is_seller==1){
-                    $user_record=  Experts::where('member_id', '=', $member_record->id)->get();
+                    $user_record=  Experts::where('member_id', '=', $member_record->id)->first();
                 }
-                if($member_record->is_seller==1){
-                    $user_record=  Clients::where('member_id', '=', $member_record->id)->get();
+                if($member_record->is_buyer==1){
+                    $user_record=  Clients::where('member_id', '=', $member_record->id)->first();
                 }
 
                 $token = bin2hex(random_bytes(64));
@@ -289,10 +289,15 @@ class ClientsController extends Controller
                 );
                 Members::where('id', $member_record->id)
                     ->update(['token' => $token]);
+                $new_register=0;
+                if(empty($member_record->username)){
+                    $new_register=1;
+                }
                 return response()->json([
                     'message' => 'Account successfully login',
                     'token' => $token,
-                    'user_info'=>$user_info
+                    'user_info'=>$user_info,
+                    'new_register'=>$new_register
                 ], 201);
             }else{
                 DB::beginTransaction();
@@ -349,7 +354,8 @@ class ClientsController extends Controller
                 return response()->json([
                     'message' => 'Account successfully login',
                     'token' => $token,
-                    'user_info'=>$user_info
+                    'user_info'=>$user_info,
+                    'new_register'=>1
                 ], 201);
             }
         }
@@ -358,6 +364,62 @@ class ClientsController extends Controller
             'message' => 'info missing'
         ], 400);
     }
+
+    public function api_set_username_or_password(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'username' => 'required|string|between:2,100|unique:members',
+            'password' => 'required|string|between:6,100|max:100'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $member=Members::where('id', $member_record->id)
+            ->update(['username'=>$request->username,'password'=>bcrypt($request->password)]);
+        if ($member) {
+            DB::commit();
+            $clients=Clients::where('member_id',$member_record->id)->first();
+            $user_info=array(
+                'id'=>$member_record->id,
+                'first_name'=>$clients->first_name,
+                'last_name'=>$clients->last_name,
+                'email'=>$clients->email,
+                'is_seller'=>$member_record->is_seller,
+                'is_buyer'=>$member_record->is_buyer,
+                'mobile_number'=>'',
+                'username'=>''
+            );
+            return response()->json([
+                'message' => 'Account successfully login',
+                'token' => $token,
+                'user_info'=>$user_info
+            ], 201);
+
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+    }
+
 
     public function api_register(Request $request)
     {

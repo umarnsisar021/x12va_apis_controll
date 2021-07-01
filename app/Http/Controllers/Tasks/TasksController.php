@@ -10,8 +10,6 @@ use App\Models\Members\Members;
 use App\Models\Notifications;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Validator;
 
 class TasksController extends Controller
@@ -24,9 +22,83 @@ class TasksController extends Controller
     }
 
 
+    public function get_data(Request $request)
+    {
+        $perPage = request('perPage', 10);
+        $search = request('q');
+        $clients = Tasks::orderByDesc('id')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')
+            ->leftjoin('clients', 'clients.member_id', '=', 'tasks.client_id')
+            ->leftjoin('experts', 'experts.member_id', '=', 'tasks.expert_id')
+            ->select('tasks.*', 'skills.name as skill_name',
+                'clients.first_name as client_first_name',
+                'clients.last_name as client_last_name',
+                'experts.first_name as expert_first_name',
+                'experts.last_name as expert_last_name');
+        if (!empty($search)) {
+            $clients->where('clients.first_name', 'like', '%' . $search . '%')->orWhere('clients.last_name', 'like', '%' . $search . '%');
+        }
+
+        if (!empty($role)) {
+            //$user->where('role', $role);
+        }
+
+        $clients = $clients->paginate($perPage);
+        return response()->json($clients);
+    }
+
+
+    public function delete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $user = Tasks::find($request['id']);
+        $user->delete();
+        return response()->json([
+            'message' => 'Record successfully deleted'
+        ], 201);
+    }
+
+
+    public function get(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $task = Tasks::find($request->id);
+        $client = Clients::where('member_id',$task->client_id)->select('clients.*','members.username')->leftjoin('members', 'members.id', '=', 'clients.member_id')->first();
+        $expert = Experts::where('member_id',$task->expert_id)->select('experts.*','members.username')->leftjoin('members', 'members.id', '=', 'experts.member_id')->first();
+        return response()->json([
+            'message' => 'Get Record successfully',
+            'client' => $client,
+            'expert' => $expert,
+            'record' => $task
+        ], 201);
+    }
+
     public function api_add_task(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'skill_id' => 'required',
             'description' => 'required',
             'days' => 'required'
         ]);

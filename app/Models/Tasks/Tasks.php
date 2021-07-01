@@ -19,13 +19,14 @@ class Tasks extends Model
      */
 
     protected $fillable = [
-        'task_id',
+        'id',
         'client_id',
         'assigned_to',
         'description',
         'document',
         'days',
         'status',
+        'skill_id'
     ];
 
 
@@ -39,7 +40,8 @@ class Tasks extends Model
         return [
             'client_id' => 'required',
             'description' => 'required|string',
-            'days' => 'required'
+            'days' => 'required',
+            'skill_id'=>'required'
         ];
     }
 }

@@ -90,6 +90,15 @@ Route::group([
     Route::post('/clients/fileupload', [ClientsController::class, 'uploadfile_to_s3']);
     Route::post('/clients/change_password', [ClientsController::class, 'changePassword']);
 
+
+    //Task
+    Route::post('/tasks/get_data', [TasksController::class, 'get_data']);
+    Route::post('/tasks/add', [TasksController::class, 'add']);
+    Route::post('/tasks/update', [TasksController::class, 'update']);
+    Route::post('/tasks/delete', [TasksController::class, 'delete']);
+    Route::post('/tasks/get', [TasksController::class, 'get']);
+
+
     //Pages
     Route::post('/pages/get_fields', [PagesController::class, 'get_fields']);
     Route::post('/pages/home/update_banner', [HomePageController::class, 'update_banner']);
@@ -104,9 +113,12 @@ Route::group([
         Route::post('/clients/register_new_client', [ClientsController::class, 'api_register']);
         Route::post('/clients/login', [ClientsController::class, 'api_login']);
         Route::post('/clients/logout', [ClientsController::class, 'api_logout']);
+        Route::post('/clients/set_username_or_password', [ClientsController::class, 'api_set_username_or_password']);
 
         Route::post('/skills', [SkillsController::class, 'api_list']);
         Route::post('/find_total_experts', [ExpertsController::class, 'api_find_total_experts']);
+        Route::post('/get_skills_with_experts', [ExpertsController::class, 'api_get_skills_with_experts']);
+        Route::post('/get_experts_public_profile', [ExpertsController::class, 'api_get_experts_public_profile']);
 
         Route::post('/add_task', [TasksController::class, 'api_add_task']);
 
