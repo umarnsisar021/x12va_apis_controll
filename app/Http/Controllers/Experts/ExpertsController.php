@@ -452,8 +452,9 @@ class ExpertsController extends Controller
         $skills = Skills::where('status', 0)->select('id', 'name', 'short_code')->get();
         foreach ($skills as $index => $skill) {
             $skills[$index]['experts'] = Experts::where('experts.status', 0)
-                ->select('first_name', 'last_name', 'experts.id', 'avatar')
+                ->select('first_name', 'last_name', 'experts.id', 'avatar','members.username')
                 ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')
+                ->leftjoin('members', 'members.id', '=', 'experts.member_id')
                 ->where('experts_skills.skill_id', $skill->id)->limit(10)->get();
         }
         return response()->json([
@@ -465,7 +466,7 @@ class ExpertsController extends Controller
     public function api_get_experts_public_profile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'expert_id' => 'required'
+            'username' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -476,7 +477,10 @@ class ExpertsController extends Controller
             ];
             return response()->json($data, 400);
         }
-        $expert = Experts::where('id', $request->expert_id)->first();
+        $expert = Experts::where('members.username', $request->username)
+            ->select('experts.*','members.username')
+            ->leftjoin('members', 'members.id', '=', 'experts.member_id')
+            ->first();
         if (!$expert) {
             return response()->json([
                 'message' => 'Expert Not Found'

@@ -120,7 +120,10 @@ Route::group([
         Route::post('/get_skills_with_experts', [ExpertsController::class, 'api_get_skills_with_experts']);
         Route::post('/get_experts_public_profile', [ExpertsController::class, 'api_get_experts_public_profile']);
 
-        Route::post('/add_task', [TasksController::class, 'api_add_task']);
+
+        Route::post('/clients/add_task', [TasksController::class, 'api_add_task']);
+        Route::post('/clients/get_client_tasks', [TasksController::class, 'api_get_client_tasks']);
+        Route::post('/clients/get_client_proposals', [TasksController::class, 'api_get_client_proposals']);
 
 
     });
