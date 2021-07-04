@@ -295,15 +295,14 @@ class TasksController extends Controller
                 'message' => 'invalid token'
             ], 400);
         }
-
-        $records = Tasks_proposals::where(['tasks.client_id' => $member_record->id])
-            ->select('tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name')
-            ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.id')
+        $records = Tasks_proposals::where('tasks.client_id', $member_record->id)
+            ->select('tasks_proposals.id','tasks_proposals.task_id','tasks_proposals.expert_id','tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name')
+            ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
 
-        if (isset($request->proposal_id) && !empty($request->proposal_id)) {
-            $records->where('tasks_proposals.id', $request->proposal_id);
-        }
+//        if (isset($request->proposal_id) && !empty($request->proposal_id)) {
+//            $records->where('tasks_proposals.id', $request->proposal_id);
+//        }
         $records = $records->get();
         return response()->json([
             'message' => count($records) . ' Proposals Found ',

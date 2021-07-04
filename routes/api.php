@@ -67,6 +67,8 @@ Route::group([
     Route::post('/experts/get_data', [ExpertsController::class, 'get_data']);
     Route::post('/experts/add', [ExpertsController::class, 'add']);
     Route::post('/experts/update', [ExpertsController::class, 'update']);
+    Route::post('/experts/status_change', [ExpertsController::class, 'statusChange']);
+
     Route::post('/experts/delete', [ExpertsController::class, 'delete']);
     Route::post('/experts/get', [ExpertsController::class, 'get']);
     Route::post('/experts/fileupload', [ExpertsController::class, 'uploadfile_to_s3']);

@@ -33,8 +33,7 @@ class ExpertsController extends Controller
         if (!empty($search)) {
             $experts->where('first_name', 'like', '%' . $search . '%')->orWhere('last_name', 'like', '%' . $search . '%');
         }
-
-        if (!empty($status)) {
+        if (!empty($status) || $status==0) {
             $experts->where('status', $status);
         }
 
@@ -145,6 +144,31 @@ class ExpertsController extends Controller
         unset($validator['id']);
         Experts::where('id', $id)
             ->update($validator);
+        return response()->json([
+            'message' => 'Data successfully updated',
+            'record' => $validator
+        ], 201);
+    }
+
+
+    public function statusChange(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        Experts::where('id', $request->id)
+            ->update(['status'=>$request->status]);
         return response()->json([
             'message' => 'Data successfully updated',
             'record' => $validator
