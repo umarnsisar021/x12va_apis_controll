@@ -28,13 +28,14 @@ class ExpertsController extends Controller
     {
         $perPage = request('perPage', 10);
         $search = request('q');
+        $status = isset($request->status)?$request->status:0;
         $experts = Experts::orderByDesc('id');
         if (!empty($search)) {
             $experts->where('first_name', 'like', '%' . $search . '%')->orWhere('last_name', 'like', '%' . $search . '%');
         }
 
-        if (!empty($role)) {
-            //$user->where('role', $role);
+        if (!empty($status)) {
+            $experts->where('status', $status);
         }
 
         $experts = $experts->paginate($perPage);
