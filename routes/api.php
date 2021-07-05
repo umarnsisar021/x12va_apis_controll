@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Tasks\TasksController;
+use App\Http\Controllers\Test\QuestionsTemplatesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\App\CountriesController;
 use App\Http\Controllers\App\SkillsController;
@@ -106,6 +107,14 @@ Route::group([
     Route::post('/pages/home/update_banner', [HomePageController::class, 'update_banner']);
     Route::post('/pages/home/delete_banner', [HomePageController::class, 'delete_banner']);
     Route::post('/pages/home/add_marketplace', [HomePageController::class, 'add_marketplace']);
+
+
+    //Test
+    Route::post('/questions_templates/get_data', [QuestionsTemplatesController::class, 'get_data']);
+    Route::post('/questions_templates/add', [QuestionsTemplatesController::class, 'add']);
+    Route::post('/questions_templates/update', [QuestionsTemplatesController::class, 'update']);
+    Route::post('/questions_templates/delete', [QuestionsTemplatesController::class, 'delete']);
+    Route::post('/questions_templates/get', [QuestionsTemplatesController::class, 'get']);
 
 
     Route::group([

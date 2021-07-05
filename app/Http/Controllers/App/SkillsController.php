@@ -55,7 +55,7 @@ class SkillsController extends Controller
         }
        $skills = Skills::get();
         return response()->json([
-            'message' => 'Skill successfully created',
+            'message' => 'Skill successfully',
             'skills' => $skills
         ], 201);
     }

@@ -288,6 +288,9 @@ class TasksController extends Controller
             return response()->json($data, 400);
         }
 
+        $perPage = request('perPage', 10);
+        $search = request('q');
+
         $token = $request->token;
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
@@ -303,7 +306,7 @@ class TasksController extends Controller
 //        if (isset($request->proposal_id) && !empty($request->proposal_id)) {
 //            $records->where('tasks_proposals.id', $request->proposal_id);
 //        }
-        $records = $records->get();
+        $records = $records->paginate($perPage);
         return response()->json([
             'message' => count($records) . ' Proposals Found ',
             'records' => $records
