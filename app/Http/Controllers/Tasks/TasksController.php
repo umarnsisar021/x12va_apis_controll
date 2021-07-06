@@ -243,6 +243,9 @@ class TasksController extends Controller
             return response()->json($data, 400);
         }
 
+        // $perPage = request('perPage', 10);
+        // $search = request('q');
+
         $token = $request->token;
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
@@ -253,7 +256,7 @@ class TasksController extends Controller
 
         $records = Tasks::where(['tasks.client_id' => $member_record->id, 'tasks.status' => $request->status])
             ->select('tasks.id', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
-            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
                 $join->on('task_assign.status', '=', DB::raw('1'));
@@ -262,8 +265,9 @@ class TasksController extends Controller
                 $join->on('task_complete.task_id', '=', 'tasks.id');
                 $join->on('task_complete.status', '=', DB::raw('3'));
             })
-            ->leftjoin('tasks_proposals', 'tasks_proposals.task_id', '=', 'tasks.id')
-            ->get();
+            ->leftjoin('tasks_proposals', 'tasks_proposals.task_id', '=', 'tasks.id');
+        // $records = $records->paginate($perPage);
+        $records = $records->get();
 
         return response()->json([
             'message' => count($records) . ' Orders Found ',
@@ -303,9 +307,9 @@ class TasksController extends Controller
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
 
-//        if (isset($request->proposal_id) && !empty($request->proposal_id)) {
-//            $records->where('tasks_proposals.id', $request->proposal_id);
-//        }
+        if (isset($request->task_id) && !empty($request->task_id)) {
+            $records->where('tasks_proposals.task_id', $request->task_id);
+        }
         $records = $records->paginate($perPage);
         return response()->json([
             'message' => count($records) . ' Proposals Found ',

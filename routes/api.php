@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Tasks\TasksController;
-use App\Http\Controllers\Test\QuestionsTemplatesController;
+use App\Http\Controllers\Test\TestTemplatesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\App\CountriesController;
 use App\Http\Controllers\App\SkillsController;
@@ -110,11 +110,11 @@ Route::group([
 
 
     //Test
-    Route::post('/questions_templates/get_data', [QuestionsTemplatesController::class, 'get_data']);
-    Route::post('/questions_templates/add', [QuestionsTemplatesController::class, 'add']);
-    Route::post('/questions_templates/update', [QuestionsTemplatesController::class, 'update']);
-    Route::post('/questions_templates/delete', [QuestionsTemplatesController::class, 'delete']);
-    Route::post('/questions_templates/get', [QuestionsTemplatesController::class, 'get']);
+    Route::post('/test_templates/get_data', [TestTemplatesController::class, 'get_data']);
+    Route::post('/test_templates/add', [TestTemplatesController::class, 'add']);
+    Route::post('/test_templates/update', [TestTemplatesController::class, 'update']);
+    Route::post('/test_templates/delete', [TestTemplatesController::class, 'delete']);
+    Route::post('/test_templates/get', [TestTemplatesController::class, 'get']);
 
 
     Route::group([

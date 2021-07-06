@@ -252,7 +252,7 @@ class ClientsController extends Controller
                     'is_buyer'=>$member_record->is_buyer,
                     'mobile_number'=>$user_record->mobile_number,
                     'username'=>$member_record->username,
-                    'avatar' => $member_record->avatar,
+                    'avatar' => $user_record->avatar,
                 );
                 Members::where('id', $member_record->id)
                     ->update(['token' => $token]);
@@ -287,7 +287,7 @@ class ClientsController extends Controller
                     'is_buyer'=>$member_record->is_buyer,
                     'mobile_number'=>$user_record->mobile_number,
                     'username'=>$member_record->username,
-                    'avatar' => $member_record->avatar,
+                    'avatar' => $user_record->avatar,
                 );
                 Members::where('id', $member_record->id)
                     ->update(['token' => $token]);
@@ -350,7 +350,7 @@ class ClientsController extends Controller
                     'is_buyer'=>$member->is_buyer,
                     'mobile_number'=>'',
                     'username'=>'',
-                    'avatar' => $member_record->avatar,
+                    'avatar' => $clients->avatar,
                 );
                 Members::where('id', $member->id)
                     ->update(['token' => $token]);
@@ -408,7 +408,7 @@ class ClientsController extends Controller
                 'is_buyer'=>$member_record->is_buyer,
                 'mobile_number'=>'',
                 'username'=>'',
-                'avatar' => $member_record->avatar,
+                'avatar' => $clients->avatar,
             );
             return response()->json([
                 'message' => 'Account successfully login',
