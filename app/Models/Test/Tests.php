@@ -24,6 +24,7 @@ class Tests extends Model
         'name',
         'description',
         'duration',
+        'passing_percentage',
         'status'
     ];
 
@@ -38,7 +39,8 @@ class Tests extends Model
         return [
             'skill_id' => 'required',
             'name' => 'required|string',
-            'duration' => 'required'
+            'duration' => 'required',
+            'passing_percentage'=>'required'
         ];
     }
 }

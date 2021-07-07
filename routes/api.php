@@ -137,6 +137,14 @@ Route::group([
         Route::post('/clients/get_client_proposals', [TasksController::class, 'api_get_client_proposals']);
 
 
+
+        //Experts
+        Route::post('/experts/register_as_a_reference_code', [ExpertsController::class, 'api_register_as_a_reference_code']);
+
+
+        //Test
+        Route::post('/test/get_test_detail', [TestTemplatesController::class, 'api_get_test_detail']);
+
     });
 
 });

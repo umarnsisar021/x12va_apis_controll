@@ -315,8 +315,6 @@ class TasksController extends Controller
             'message' => count($records) . ' Proposals Found ',
             'records' => $records
         ], 201);
-
-
     }
 
 }

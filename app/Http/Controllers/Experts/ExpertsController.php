@@ -28,12 +28,12 @@ class ExpertsController extends Controller
     {
         $perPage = request('perPage', 10);
         $search = request('q');
-        $status = isset($request->status)?$request->status:0;
+        $status = isset($request->status) ? $request->status : 0;
         $experts = Experts::orderByDesc('id');
         if (!empty($search)) {
             $experts->where('first_name', 'like', '%' . $search . '%')->orWhere('last_name', 'like', '%' . $search . '%');
         }
-        if (!empty($status) || $status==0) {
+        if (!empty($status) || $status == 0) {
             $experts->where('status', $status);
         }
 
@@ -168,7 +168,7 @@ class ExpertsController extends Controller
 
 
         Experts::where('id', $request->id)
-            ->update(['status'=>$request->status]);
+            ->update(['status' => $request->status]);
         return response()->json([
             'message' => 'Data successfully updated',
             'record' => $validator
@@ -477,7 +477,7 @@ class ExpertsController extends Controller
         $skills = Skills::where('status', 0)->select('id', 'name', 'short_code')->get();
         foreach ($skills as $index => $skill) {
             $skills[$index]['experts'] = Experts::where('experts.status', 0)
-                ->select('first_name', 'last_name', 'experts.id', 'avatar','members.username')
+                ->select('first_name', 'last_name', 'experts.id', 'avatar', 'members.username')
                 ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')
                 ->leftjoin('members', 'members.id', '=', 'experts.member_id')
                 ->where('experts_skills.skill_id', $skill->id)->limit(10)->get();
@@ -503,7 +503,7 @@ class ExpertsController extends Controller
             return response()->json($data, 400);
         }
         $expert = Experts::where('members.username', $request->username)
-            ->select('experts.*','members.username')
+            ->select('experts.*', 'members.username')
             ->leftjoin('members', 'members.id', '=', 'experts.member_id')
             ->first();
         if (!$expert) {
@@ -517,7 +517,109 @@ class ExpertsController extends Controller
             ->where('experts_skills.expert_id', $expert->id)->get();
         return response()->json([
             'expert_detail' => $expert,
-            'skills'=>$skills
+            'skills' => $skills
         ], 201);
     }
+
+
+    public function api_register_as_a_reference_code(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'first_name' => 'required',
+            'middle_name' => '',
+            'last_name' => 'required',
+            'd_o_b' => 'required',
+            'gender' => 'required',
+            'email' => 'required',
+            'reference_code' => 'required',
+
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+        $expert_record = Experts::where('member_id', '=', $member_record->id)->first();
+        if ($expert_record) {
+            return response()->json([
+                'message' => 'Already Applied'
+            ], 400);
+        }
+
+        $expert_record = Experts::where('reference_code', '=', $request->reference_code)->first();
+        if (!$expert_record || empty($request->reference_code)) {
+            return response()->json([
+                'message' => 'invalid Reference Code'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $member = Members::where('id', $member_record->id)
+            ->update(['is_seller' => 1]);
+
+        if ($member) {
+
+            $expert = Experts::create(array_merge(
+                $validator->validated(),
+                [
+                    'member_id' => $member_record->id,
+                    'first_name' => $request->first_name,
+                    'middle_name' => $request->middle_name,
+                    'last_name' => $request->last_name,
+                    'd_o_b' => $request->d_o_b,
+                    'gender' => $request->gender,
+                    'email' => $request->email
+                ]
+            ));
+
+
+            $user_info=array(
+                'id'=>$member_record->id,
+                'first_name'=>$expert->first_name,
+                'last_name'=>$expert->last_name,
+                'email'=>$expert->email,
+                'is_seller'=>1,
+                'is_buyer'=>$member_record->is_buyer,
+                'mobile_number'=>$expert->mobile_number,
+                'username'=>$member_record->username,
+                'avatar' => $expert->avatar,
+            );
+
+            if ($expert) {
+                DB::commit();
+
+                return response()->json([
+                    'message' => 'Expert successfully Registered',
+                    'token' => $token,
+                    'user_info'=>$user_info
+                ], 201);
+            } else {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'some thing wrong'
+                ], 400);
+            }
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+
+
+    }
+
 }
