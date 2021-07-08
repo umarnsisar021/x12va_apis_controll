@@ -527,7 +527,6 @@ class ExpertsController extends Controller
         $validator = Validator::make($request->all(), [
             'token' => 'required',
             'first_name' => 'required',
-            'middle_name' => '',
             'last_name' => 'required',
             'd_o_b' => 'required',
             'gender' => 'required',
@@ -577,7 +576,6 @@ class ExpertsController extends Controller
                 [
                     'member_id' => $member_record->id,
                     'first_name' => $request->first_name,
-                    'middle_name' => $request->middle_name,
                     'last_name' => $request->last_name,
                     'd_o_b' => $request->d_o_b,
                     'gender' => $request->gender,

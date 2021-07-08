@@ -40,7 +40,7 @@ class Tests extends Model
             'skill_id' => 'required',
             'name' => 'required|string',
             'duration' => 'required',
-            'passing_percentage'=>'required'
+            'passing_percentage' => 'required|numeric|min:1|max:100'
         ];
     }
 }
