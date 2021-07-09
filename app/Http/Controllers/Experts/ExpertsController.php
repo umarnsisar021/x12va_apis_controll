@@ -554,8 +554,9 @@ class ExpertsController extends Controller
         $expert_record = Experts::where('member_id', '=', $member_record->id)->first();
         if ($expert_record) {
             return response()->json([
-                'message' => 'Already Applied'
-            ], 400);
+                'message' => 'Already Applied',
+                'status'=>400
+            ], 200);
         }
 
         $expert_record = Experts::where('reference_code', '=', $request->reference_code)->first();
