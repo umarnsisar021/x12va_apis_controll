@@ -144,6 +144,7 @@ Route::group([
 
         //Test
         Route::post('/test/get_test_detail', [TestTemplatesController::class, 'api_get_test_detail']);
+        Route::post('/test/start_test', [TestTemplatesController::class, 'api_start_test']);
 
     });
 

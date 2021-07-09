@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Test;
 
+use App\Models\Test\Test_attempts;
 use App\Models\Test\Test_questions;
 use App\Models\Test\Test_questions_options;
 
@@ -169,7 +170,7 @@ class TestTemplatesController extends Controller
 
         if (isset($request->questions) && is_array($request->questions)) {
             foreach ($request->questions as $index => $question) {
-                if(empty($question)){
+                if (empty($question)) {
                     continue;
                 }
                 $question_data = array(
@@ -188,7 +189,7 @@ class TestTemplatesController extends Controller
 
 
                 foreach ($options[$index] as $option_index => $option) {
-                    if(empty($option)){
+                    if (empty($option)) {
                         continue;
                     }
                     $option_data = array(
@@ -210,19 +211,19 @@ class TestTemplatesController extends Controller
 
 
         if (isset($request->question_deletes) && is_array($request->question_deletes)) {
-            foreach($request->question_deletes as $question_delete){
+            foreach ($request->question_deletes as $question_delete) {
                 Test_questions_options::where('question_id', $question_delete)->delete();
                 Test_questions::where('id', $question_delete)->delete();
             }
         }
 
         if (isset($request->option_deletes) && is_array($request->option_deletes)) {
-            foreach($request->option_deletes as $option_delete){
+            foreach ($request->option_deletes as $option_delete) {
                 Test_questions_options::where('id', $option_delete)->delete();
             }
         }
 
-            if (!$test) {
+        if (!$test) {
             DB::rollBack();
             return response()->json([
                 'message' => 'info missing'
@@ -312,5 +313,51 @@ class TestTemplatesController extends Controller
         ], 201);
     }
 
+
+    public function api_start_test(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'test_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+        $test_attempt = Test_attempts::create(
+            array(
+                'test_id' => $request->test_id,
+                'member_id' => $member_record->id,
+                'start_time' => Date('H:i')
+            )
+        );
+
+        if ($test_attempt) {
+
+            return response()->json([
+                'message' => 'Test Start '
+            ], 201);
+        } else {
+            return response()->json([
+                'message' => 'Test  not Start'
+            ], 400);
+        }
+
+
+    }
 
 }
