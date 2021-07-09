@@ -15,14 +15,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Validator;
 
-class TestTemplatesController extends Controller
+class TestAttemptsController extends Controller
 {
 
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);
         $search = request('q');
-        $test_questions = Tests::orderByDesc('tests.id')
+        $test_questions = Test_attempts::orderByDesc('test_attempts.created_at')
+            ->leftjoin('tests', 'tests.id', '=', 'test_attempts.test_id')
             ->leftjoin('skills', 'skills.id', '=', 'tests.skill_id')
             ->select('tests.*', 'skills.name as skill_name');
         if (!empty($search)) {
@@ -269,11 +270,12 @@ class TestTemplatesController extends Controller
     }
 
 
-    public function api_get_test_detail(Request $request)
+
+    public function api_start_test(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
-            'skill_id' => 'required',
+            'test_id' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -293,25 +295,96 @@ class TestTemplatesController extends Controller
                 'message' => 'invalid token'
             ], 400);
         }
-        $test_record = Tests::where('skill_id', $request->skill_id)
-            ->select('id', 'name', 'description', 'duration', 'passing_percentage')->first();
+        $test_attempt = Test_attempts::create(
+            array(
+                'test_id' => $request->test_id,
+                'member_id' => $member_record->id,
+                'start_time' => Date('Y-m-d H:i')
+            )
+        );
 
-        if ($test_record) {
-            $test_questions = Test_questions::where('test_id', $test_record->id)
-                ->select('id', 'question')->get();
-            foreach ($test_questions as $index => $test_question) {
-                $test_questions_options = Test_questions_options::where('question_id', $test_question->id)
-                    ->select('id', 'text as option')
-                    ->get();
-                $test_questions[$index]['options'] = $test_questions_options;
-            }
+        if ($test_attempt) {
+
+            return response()->json([
+                'message' => 'Test Start',
+                'test_attempt_id' => $test_attempt->id,
+                'status' => 201
+            ], 201);
+        } else {
+            return response()->json([
+                'message' => 'Test  not Start',
+                'status' => 400
+            ], 400);
         }
 
-        return response()->json([
-            'message' => ' Record Found ',
-            'record' => $test_record,
-            'questions' => $test_questions
-        ], 201);
+
+    }
+
+    public function api_end_test(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'test_attempt_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $test_attempt_record = Test_attempts::where(['id' => $request->test_attempt_id, 'member_id' => $member_record->id])->first();
+        if (!$test_attempt_record || empty($request->test_attempt_id)) {
+            return response()->json([
+                'message' => 'invalid id'
+            ], 400);
+        }
+        DB::beginTransaction();
+        $test_attempt_record->update(['status'=>1]);
+        $test_result = Test_attempts::where('id', $test_attempt_record->id)
+            ->update(array(
+                'end_time' => Date('Y-m-d H:i'
+                )));
+
+
+        if ($test_result) {
+            if (isset($request->answers) && is_array($request->answers)) {
+                foreach ($request->answers as $answer) {
+                    $answer_array = array(
+                        'attempt_id' => $test_attempt_record->id,
+                        'question_id' => $answer['question_id'],
+                        'option_id' => $answer['option_id'],
+                    );
+                     Test_attempts_answers::create($answer_array);
+                }
+            }
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Test Successfully Done',
+                'status' => 201
+            ], 201);
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Test not End',
+                'status' => 400
+            ], 400);
+        }
+
+
     }
 
 

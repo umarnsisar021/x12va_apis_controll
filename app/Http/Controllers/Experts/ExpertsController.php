@@ -193,7 +193,7 @@ class ExpertsController extends Controller
         $expert = Experts::find($request['id']);
         $member = Members::find($expert['member_id']);
         $education = ExpertsEducation::where('expert_id', '=', $expert['id'])->get();
-        $skills = ExpertsSkills::where('expert_id', '=', $expert['id'])
+        $skills = ExpertsSkills::where('member_id', '=', $member['id'])
             ->join('skills', 'experts_skills.skill_id', '=', 'skills.id')
             ->select('experts_skills.*', 'skills.name', 'skills.short_code')
             ->get();
@@ -255,7 +255,9 @@ class ExpertsController extends Controller
             return response()->json($data, 400);
         }
 
-        $chck = ExpertsSkills::where('expert_id', '=', $request['expert_id'])
+        $expert = Experts::find($request['id']);
+
+        $chck = ExpertsSkills::where('member_id', '=', $expert['member_id'])
             ->where('skill_id', '=', $request['skill_id'])->get();
 
         if (count($chck) > 0) {
@@ -264,7 +266,7 @@ class ExpertsController extends Controller
             ], 202);
         } else {
             $expertsSkills = ExpertsSkills::create($validator->validated());
-            $skills = ExpertsSkills::where('expert_id', '=', $request['expert_id'])
+            $skills = ExpertsSkills::where('member_id', '=', $expert['member_id'])
                 ->join('skills', 'experts_skills.skill_id', '=', 'skills.id')
                 ->select('experts_skills.*', 'skills.name', 'skills.short_code')
                 ->get();
@@ -464,7 +466,7 @@ class ExpertsController extends Controller
 
         $records = Experts::where('experts_skills.skill_id', '=', $request->skill_id)
             ->select('experts.id')
-            ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')->get()->count();
+            ->leftjoin('experts_skills', 'experts_skills.member_id', '=', 'experts.member_id')->get()->count();
 
         return response()->json([
             'records' => $records
@@ -478,8 +480,8 @@ class ExpertsController extends Controller
         foreach ($skills as $index => $skill) {
             $skills[$index]['experts'] = Experts::where('experts.status', 0)
                 ->select('first_name', 'last_name', 'experts.id', 'avatar', 'members.username')
-                ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')
                 ->leftjoin('members', 'members.id', '=', 'experts.member_id')
+                ->leftjoin('experts_skills', 'experts_skills.member_id', '=', 'members.id')
                 ->where('experts_skills.skill_id', $skill->id)->limit(10)->get();
         }
         return response()->json([
@@ -514,7 +516,7 @@ class ExpertsController extends Controller
         $skills = Skills::where('skills.status', 0)
             ->select('skills.id', 'skills.name', 'skills.short_code')
             ->leftjoin('experts_skills', 'experts_skills.skill_id', '=', 'skills.id')
-            ->where('experts_skills.expert_id', $expert->id)->get();
+            ->where('experts_skills.member_id', $expert->member_id)->get();
         return response()->json([
             'expert_detail' => $expert,
             'skills' => $skills
@@ -617,6 +619,102 @@ class ExpertsController extends Controller
                 'message' => 'some thing wrong'
             ], 400);
         }
+
+
+    }
+
+
+
+    public function api_skill_add(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'skill_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $has_skill = ExpertsSkills::where(['skill_id' => $request->skill_id, 'member_id' => $member_record->id])->first();
+        if ($has_skill) {
+            return response()->json([
+                'message' => 'already have is skill',
+                'status' => 400
+            ], 400);
+        }
+        DB::beginTransaction();
+        $experts_skills=ExpertsSkills::create([
+            'skill_id'=>$request->skill_id,
+            'member_id' => $member_record->id
+        ]);
+
+        if ($experts_skills) {
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Successfully Added',
+                'status' => 201
+            ], 201);
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
+
+
+    }
+
+    public function api_get_my_skills(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $skills = ExpertsSkills::where([ 'member_id' => $member_record->id])
+            ->select('skills.id','skills.name','experts_skills.status')
+            ->leftjoin('skills', 'skills.id', '=', 'experts_skills.skill_id')
+            ->get();
+
+
+        return response()->json([
+            'message' => 'Successfully Added',
+            'records'=>$skills
+        ], 201);
 
 
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Tasks\TasksController;
+use App\Http\Controllers\Test\TestAttemptsController;
 use App\Http\Controllers\Test\TestTemplatesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\App\CountriesController;
@@ -110,11 +111,11 @@ Route::group([
 
 
     //Test
-    Route::post('/test_templates/get_data', [TestTemplatesController::class, 'get_data']);
-    Route::post('/test_templates/add', [TestTemplatesController::class, 'add']);
-    Route::post('/test_templates/update', [TestTemplatesController::class, 'update']);
-    Route::post('/test_templates/delete', [TestTemplatesController::class, 'delete']);
-    Route::post('/test_templates/get', [TestTemplatesController::class, 'get']);
+    Route::post('/test/templates/get_data', [TestTemplatesController::class, 'get_data']);
+    Route::post('/test/templates/add', [TestTemplatesController::class, 'add']);
+    Route::post('/test/templates/update', [TestTemplatesController::class, 'update']);
+    Route::post('/test/templates/delete', [TestTemplatesController::class, 'delete']);
+    Route::post('/test/templates/get', [TestTemplatesController::class, 'get']);
 
 
     Route::group([
@@ -140,11 +141,14 @@ Route::group([
 
         //Experts
         Route::post('/experts/register_as_a_reference_code', [ExpertsController::class, 'api_register_as_a_reference_code']);
+        Route::post('/experts/skill_add', [ExpertsController::class, 'api_skill_add']);
+        Route::post('/experts/get_my_skills', [ExpertsController::class, 'api_get_my_skills']);
 
 
         //Test
         Route::post('/test/get_test_detail', [TestTemplatesController::class, 'api_get_test_detail']);
-        Route::post('/test/start_test', [TestTemplatesController::class, 'api_start_test']);
+        Route::post('/test/start_test', [TestAttemptsController::class, 'api_start_test']);
+        Route::post('/test/end_test', [TestAttemptsController::class, 'api_end_test']);
 
     });
 
