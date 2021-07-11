@@ -296,6 +296,7 @@ class TestTemplatesController extends Controller
         $test_record = Tests::where('skill_id', $request->skill_id)
             ->select('id', 'name', 'description', 'duration', 'passing_percentage')->first();
 
+        $test_questions=[];
         if ($test_record) {
             $test_questions = Test_questions::where('test_id', $test_record->id)
                 ->select('id', 'question')->get();

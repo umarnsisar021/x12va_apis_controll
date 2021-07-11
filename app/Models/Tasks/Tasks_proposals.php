@@ -21,7 +21,7 @@ class Tasks_proposals extends Model
     protected $fillable = [
         'id',
         'task_id',
-        'expert_id',
+        'member_id',
         'subject',
         'problem_statement',
         'budget',
@@ -39,7 +39,7 @@ class Tasks_proposals extends Model
     {
         return [
             'task_id' => 'required',
-            'expert_id' => 'required',
+            'member_id' => 'required',
             'budget' => 'required',
             'description' => 'required',
             'status' => 'required'

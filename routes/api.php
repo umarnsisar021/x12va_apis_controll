@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Notifications\NotificationsController;
 use App\Http\Controllers\Tasks\TasksController;
 use App\Http\Controllers\Test\TestAttemptsController;
 use App\Http\Controllers\Test\TestTemplatesController;
@@ -69,7 +70,7 @@ Route::group([
     Route::post('/experts/get_data', [ExpertsController::class, 'get_data']);
     Route::post('/experts/add', [ExpertsController::class, 'add']);
     Route::post('/experts/update', [ExpertsController::class, 'update']);
-    Route::post('/experts/status_change', [ExpertsController::class, 'statusChange']);
+    Route::post('/experts/status_change', [ExpertsController::class, 'status_change']);
 
     Route::post('/experts/delete', [ExpertsController::class, 'delete']);
     Route::post('/experts/get', [ExpertsController::class, 'get']);
@@ -117,6 +118,12 @@ Route::group([
     Route::post('/test/templates/delete', [TestTemplatesController::class, 'delete']);
     Route::post('/test/templates/get', [TestTemplatesController::class, 'get']);
 
+    //Test Attempts
+    Route::post('/test/attempts/get_data', [TestAttemptsController::class, 'get_data']);
+    Route::post('/test/attempts/status_change', [TestAttemptsController::class, 'status_change']);
+    Route::post('/test/attempts/get', [TestAttemptsController::class, 'get']);
+    Route::post('/test/attempts/delete', [TestAttemptsController::class, 'delete']);
+
 
     Route::group([
         'prefix' => 'web'
@@ -136,6 +143,7 @@ Route::group([
         Route::post('/clients/add_task', [TasksController::class, 'api_add_task']);
         Route::post('/clients/get_client_tasks', [TasksController::class, 'api_get_client_tasks']);
         Route::post('/clients/get_client_proposals', [TasksController::class, 'api_get_client_proposals']);
+        Route::post('/clients/get_proposal_by_id', [TasksController::class, 'api_get_proposal_by_id']);
 
 
 
@@ -143,12 +151,19 @@ Route::group([
         Route::post('/experts/register_as_a_reference_code', [ExpertsController::class, 'api_register_as_a_reference_code']);
         Route::post('/experts/skill_add', [ExpertsController::class, 'api_skill_add']);
         Route::post('/experts/get_my_skills', [ExpertsController::class, 'api_get_my_skills']);
+        Route::post('/experts/send_proposal_task', [TasksController::class, 'api_send_proposal_task']);
+        Route::post('/experts/change_profile', [ExpertsController::class, 'api_change_profile']);
+
 
 
         //Test
         Route::post('/test/get_test_detail', [TestTemplatesController::class, 'api_get_test_detail']);
         Route::post('/test/start_test', [TestAttemptsController::class, 'api_start_test']);
         Route::post('/test/end_test', [TestAttemptsController::class, 'api_end_test']);
+
+        Route::post('/notifications/get_notifications', [NotificationsController::class, 'api_get_notifications']);
+        Route::post('/notifications/set_notify_notification', [NotificationsController::class, 'api_set_notify_notification']);
+        Route::post('/notifications/set_view_notification', [NotificationsController::class, 'api_set_view_notification']);
 
     });
 

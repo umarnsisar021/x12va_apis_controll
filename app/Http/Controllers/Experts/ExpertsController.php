@@ -151,7 +151,7 @@ class ExpertsController extends Controller
     }
 
 
-    public function statusChange(Request $request)
+    public function status_change(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required',
@@ -715,6 +715,71 @@ class ExpertsController extends Controller
             'message' => 'Successfully Added',
             'records'=>$skills
         ], 201);
+
+
+    }
+
+
+    public function api_change_profile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $expert = Experts::where(['member_id' => $member_record->id])->first();
+        if (!$expert) {
+            return response()->json([
+                'message' => 'Expert not found',
+                'status' => 400
+            ], 400);
+        }
+
+        $avatar_name = $member_record->username . '-' . $member_record->id;
+        $avatar = '';
+        if ($request->avatar) {
+            $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
+        }else{
+            return response()->json([
+                'message' => 'Avatar not found',
+                'status' => 400
+            ], 400);
+        }
+
+        DB::beginTransaction();
+       $expert_result=     Experts::where('id', $expert->id)
+                ->update(['avatar'=>$avatar]);
+        if ($expert_result) {
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Profile Successfully Update',
+                'status' => 201
+            ], 201);
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
 
 
     }

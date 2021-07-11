@@ -116,7 +116,7 @@ class TasksController extends Controller
 
 
             if ($expert) {
-                $proposal = Tasks_proposals::where(['expert_id' => $task->expert_id, 'task_id' => $task->id])->first();
+                $proposal = Tasks_proposals::where(['member_id' => $task->expert_id, 'task_id' => $task->id])->first();
                 $description = '';
                 if ($proposal) {
                     $description = $proposal->problem_statement;
@@ -303,7 +303,7 @@ class TasksController extends Controller
             ], 400);
         }
         $records = Tasks_proposals::where('tasks.client_id', $member_record->id)
-            ->select('tasks_proposals.id','tasks_proposals.task_id','tasks_proposals.expert_id','tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name')
+            ->select('tasks_proposals.id','tasks_proposals.task_id','tasks_proposals.member_id as expert_id','tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
 
@@ -315,6 +315,126 @@ class TasksController extends Controller
             'message' => count($records) . ' Proposals Found ',
             'records' => $records
         ], 201);
+    }
+
+    public function api_get_proposal_by_id(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'proposal_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+        $record = Tasks_proposals::where('tasks.client_id', $member_record->id)
+            ->select('tasks_proposals.id','tasks_proposals.task_id','tasks_proposals.subject','tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
+                'tasks_proposals.member_id as expert_id', 'experts.first_name as expert_first_name','experts.last_name as expert_last_name')
+            ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
+            ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
+        $record->where('tasks_proposals.id', $request->proposal_id);
+        $record = $record->first();
+        return response()->json([
+            'message' =>  ' Proposal Found ',
+            'records' => $record
+        ], 201);
+    }
+
+
+    public function api_send_proposal_task(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'task_id' => 'required',
+            'subject' => 'required',
+            'problem_statement' => 'required',
+            'budget' => 'required'
+        ]);
+
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->select('members.*','experts.first_name','experts.last_name')
+            ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        if($member_record->is_seller!=1){
+            return response()->json([
+                'message' => 'member not expert'
+            ], 400);
+        }
+        $task = Tasks::where('id', '=', $request->task_id)->first();
+        if(!$task){
+            return response()->json([
+                'message' => 'Task not found'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $tasks_proposal = Tasks_proposals::create(array_merge(
+            $validator->validated(),
+            [
+                'member_id' => $member_record->id,
+                'task_id' => $request->task_id,
+                'subject' => $request->subject,
+                'problem_statement' => $request->problem_statement,
+                'budget' => $request->budget,
+                'description' => isset($request->description)?$request->description:''
+            ]
+        ));
+
+        if ($tasks_proposal) {
+            $notification = Notifications::create(array_merge(
+                $validator->validated(),
+                [
+                    'primary_id' => $task->id,
+                    'title' => "Proposal Received From ".$member_record->first_name." ".$member_record->last_name,
+                    'message' => $tasks_proposal->problem_statement,
+                    'type' => 2,
+                    'member_id' => $task->client_id
+                ]
+            ));
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Proposal successfully Send',
+                'proposal_id' => $tasks_proposal->id
+            ], 201);
+
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+
+
     }
 
 }
