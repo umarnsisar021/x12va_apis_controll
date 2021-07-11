@@ -153,6 +153,8 @@ Route::group([
         Route::post('/experts/get_my_skills', [ExpertsController::class, 'api_get_my_skills']);
         Route::post('/experts/send_proposal_task', [TasksController::class, 'api_send_proposal_task']);
         Route::post('/experts/change_profile', [ExpertsController::class, 'api_change_profile']);
+        Route::post('/experts/get_expert_tasks', [TasksController::class, 'api_get_expert_tasks']);
+        Route::post('/experts/get_expert_new_tasks', [TasksController::class, 'api_get_expert_new_tasks']);
 
 
 

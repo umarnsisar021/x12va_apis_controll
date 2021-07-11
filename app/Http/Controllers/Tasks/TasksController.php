@@ -227,6 +227,102 @@ class TasksController extends Controller
     }
 
 
+    public function api_get_expert_tasks(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'status' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        // $perPage = request('perPage', 10);
+        // $search = request('q');
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $records = Tasks::where(['tasks.expert_id' => $member_record->id, 'tasks.status' => $request->status])
+            ->select('tasks.id', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
+            ->leftJoin('tasks_status_histories as task_assign', function ($join) {
+                $join->on('task_assign.task_id', '=', 'tasks.id');
+                $join->on('task_assign.status', '=', DB::raw('1'));
+            })
+            ->leftJoin('tasks_status_histories as task_complete', function ($join) {
+                $join->on('task_complete.task_id', '=', 'tasks.id');
+                $join->on('task_complete.status', '=', DB::raw('3'));
+            })
+            ->leftjoin('tasks_proposals', 'tasks_proposals.task_id', '=', 'tasks.id');
+        // $records = $records->paginate($perPage);
+        $records = $records->get();
+
+        return response()->json([
+            'message' => count($records) . ' Orders Found ',
+            'records' => $records
+        ], 201);
+
+
+    }
+
+
+    public function api_get_expert_new_tasks(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        // $perPage = request('perPage', 10);
+        // $search = request('q');
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $records = Tasks::where(['notifications.member_id' => $member_record->id, 'tasks.status' => 0])
+            ->select('tasks.*', 'skills.name as skill_name')
+            ->leftJoin('notifications', function ($join) {
+                $join->on('notifications.primary_id', '=', 'tasks.id');
+                $join->on('notifications.type', '=', DB::raw('1'));
+            })
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id');
+        // $records = $records->paginate($perPage);
+        $records = $records->get();
+
+        return response()->json([
+            'message' => count($records) . ' Orders Found ',
+            'records' => $records
+        ], 201);
+
+
+    }
+
+
     public function api_get_client_tasks(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -316,6 +412,9 @@ class TasksController extends Controller
             'records' => $records
         ], 201);
     }
+
+
+
 
     public function api_get_proposal_by_id(Request $request)
     {
