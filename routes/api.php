@@ -157,6 +157,9 @@ Route::group([
         Route::post('/experts/get_expert_new_tasks', [TasksController::class, 'api_get_expert_new_tasks']);
 
 
+        //Task
+        Route::post('/tasks/get_task_by_id', [TasksController::class, 'api_get_task_by_id']);
+
 
         //Test
         Route::post('/test/get_test_detail', [TestTemplatesController::class, 'api_get_test_detail']);
@@ -166,6 +169,7 @@ Route::group([
         Route::post('/notifications/get_notifications', [NotificationsController::class, 'api_get_notifications']);
         Route::post('/notifications/set_notify_notification', [NotificationsController::class, 'api_set_notify_notification']);
         Route::post('/notifications/set_view_notification', [NotificationsController::class, 'api_set_view_notification']);
+
 
     });
 

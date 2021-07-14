@@ -206,7 +206,9 @@ class TasksController extends Controller
                         'title' => "New Task Request Received",
                         'message' => $request->description,
                         'type' => 1,
-                        'member_id' => $expert_record->member_id
+                        'member_id' => $expert_record->member_id,
+                        'from_member_id' => $member_record->id
+
                     ]
                 ));
             }
@@ -305,12 +307,17 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['notifications.member_id' => $member_record->id, 'tasks.status' => 0])
-            ->select('tasks.*', 'skills.name as skill_name')
+            ->select('tasks.*', 'skills.name as skill_name','tasks_proposals.id as proposal_id')
             ->leftJoin('notifications', function ($join) {
                 $join->on('notifications.primary_id', '=', 'tasks.id');
                 $join->on('notifications.type', '=', DB::raw('1'));
             })
-            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id');
+            ->leftJoin('tasks_proposals', function ($join) {
+                $join->on('tasks_proposals.task_id', '=', 'tasks.id');
+                $join->on('tasks_proposals.member_id', '=','notifications.member_id');
+            })
+
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('tasks.id');
         // $records = $records->paginate($perPage);
         $records = $records->get();
 
@@ -414,6 +421,53 @@ class TasksController extends Controller
     }
 
 
+    public function api_get_task_by_id(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'task_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+        $record = Tasks::where(['tasks.id' => $request->task_id])
+            ->select('tasks.*', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.id as proposal_id')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
+            ->leftJoin('tasks_status_histories as task_assign', function ($join) {
+                $join->on('task_assign.task_id', '=', 'tasks.id');
+                $join->on('task_assign.status', '=', DB::raw('1'));
+            })
+            ->leftJoin('tasks_status_histories as task_complete', function ($join) {
+                $join->on('task_complete.task_id', '=', 'tasks.id');
+                $join->on('task_complete.status', '=', DB::raw('3'));
+            })
+
+            ->leftJoin('tasks_proposals', function ($join) use ($member_record) {
+                $join->on('tasks_proposals.task_id', '=', 'tasks.id');
+                $join->on('tasks_proposals.member_id', '=',DB::raw($member_record->id));
+            });
+        // $records = $records->paginate($perPage);
+        $record = $record->first();
+
+        return response()->json([
+            'message' =>  ' Task Found ',
+            'records' => $record
+        ], 201);
+    }
 
 
     public function api_get_proposal_by_id(Request $request)
@@ -516,7 +570,8 @@ class TasksController extends Controller
                     'title' => "Proposal Received From ".$member_record->first_name." ".$member_record->last_name,
                     'message' => $tasks_proposal->problem_statement,
                     'type' => 2,
-                    'member_id' => $task->client_id
+                    'member_id' => $task->client_id,
+                    'from_member_id' => $member_record->id,
                 ]
             ));
 

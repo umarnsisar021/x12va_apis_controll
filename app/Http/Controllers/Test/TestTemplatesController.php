@@ -69,20 +69,38 @@ class TestTemplatesController extends Controller
 
         if (isset($request->questions) && is_array($request->questions)) {
             foreach ($request->questions as $index => $question) {
+                if (empty($question)) {
+                    continue;
+                }
+                $type = $request->types[$index];
                 $question_data = array(
                     'test_id' => $test->id,
-                    'skill_id' => $test->skill_id,
-                    'question' => $question
+                    'question' => $question,
+                    'type' => $type
                 );
-                $question = Test_questions::create($question_data);
 
-                foreach ($options[$index] as $option) {
-                    $option_data = array(
-                        'question_id' => $question->id,
-                        'text' => $option
-                    );
-                    $question_option = Test_questions_options::create($option_data);
+
+
+                $question = Test_questions::create($question_data);
+                if ($type == 1) {
+                    foreach ($options[$index] as $option_index => $option) {
+                        if (empty($option)) {
+                            continue;
+                        }
+                        $option_data = array(
+                            'question_id' => $question->id,
+                            'text' => $option
+                        );
+                        $question_option = Test_questions_options::create($option_data);
+                        $correct = $request->corrects[$index];
+                        if ($correct == $option_index) {
+                            $test_questions = Test_questions::where('id', $question->id)
+                                ->update(['correct_option_id' => $question_option->id]);
+
+                        }
+                    }
                 }
+
 
             }
         }
@@ -296,7 +314,7 @@ class TestTemplatesController extends Controller
         $test_record = Tests::where('skill_id', $request->skill_id)
             ->select('id', 'name', 'description', 'duration', 'passing_percentage')->first();
 
-        $test_questions=[];
+        $test_questions = [];
         if ($test_record) {
             $test_questions = Test_questions::where('test_id', $test_record->id)
                 ->select('id', 'question')->get();

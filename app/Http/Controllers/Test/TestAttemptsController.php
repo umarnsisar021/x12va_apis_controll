@@ -94,14 +94,16 @@ class TestAttemptsController extends Controller
             ->leftjoin('experts', 'experts.member_id', '=', 'test_attempts.member_id')
             ->leftjoin('members', 'members.id', '=', 'test_attempts.member_id')
 
-            ->select('test_attempts.id', 'tests.name as test_name',
+            ->select(
+                'test_attempts.id',
+                'tests.id as test_id',
+                'tests.name as test_name',
                 'tests.duration as test_duration',
                 'experts.first_name',
                 'experts.last_name',
                 'experts.mobile_number',
                 'members.email',
                 'members.username',
-
                 'experts.avatar',
                 'skills.name as skill_name',
                 'test_attempts.start_time',
@@ -111,9 +113,20 @@ class TestAttemptsController extends Controller
             ->where('test_attempts.id',$request['id'])->first();
 
 
+        $test_questions = Test_questions::where('test_id', $test_attempt->test_id)->get();
+        foreach ($test_questions as $index => $test_question) {
+            $test_questions_options = Test_questions_options::where('question_id', $test_question->id)
+                ->select('id', 'text as option')
+                ->get();
+            $test_questions[$index]['options'] = $test_questions_options;
+        }
+
+
+
         return response()->json([
             'message' => 'Get Record successfully',
-            'record' => $test_attempt
+            'record' => $test_attempt,
+            'questions'=>$test_questions
         ], 201);
     }
 
