@@ -79,8 +79,6 @@ class TestTemplatesController extends Controller
                     'type' => $type
                 );
 
-
-
                 $question = Test_questions::create($question_data);
                 if ($type == 1) {
                     foreach ($options[$index] as $option_index => $option) {
@@ -192,10 +190,11 @@ class TestTemplatesController extends Controller
                 if (empty($question)) {
                     continue;
                 }
+                $type = $request->types[$index];
                 $question_data = array(
                     'test_id' => $request->id,
-                    'skill_id' => $request->skill_id,
-                    'question' => $question
+                    'question' => $question,
+                    'type' => $type
                 );
                 if (isset($question_ids[$index])) {
                     $question = Test_questions::where('id', $question_ids[$index])
@@ -206,25 +205,35 @@ class TestTemplatesController extends Controller
                     $question_id = Test_questions::create($question_data);
                 }
 
+                if ($type == 1) {
+                    foreach ($options[$index] as $option_index => $option) {
+                        if (empty($option)) {
+                            continue;
+                        }
+                        $option_data = array(
+                            'question_id' => $question_id,
+                            'text' => $option
+                        );
 
-                foreach ($options[$index] as $option_index => $option) {
-                    if (empty($option)) {
-                        continue;
-                    }
-                    $option_data = array(
-                        'question_id' => $question_id,
-                        'text' => $option
-                    );
 
-                    if (isset($option_ids[$index][$option_index])) {
-                        $question_option = Test_questions_options::where('id', $option_ids[$index][$option_index])
-                            ->update($option_data);
+                        $correct_option_id = '';
+                        if (isset($option_ids[$index][$option_index])) {
+                            $question_option = Test_questions_options::where('id', $option_ids[$index][$option_index])
+                                ->update($option_data);
+                            $correct_option_id = $option_ids[$index][$option_index];
+                        } else {
+                            $question_option = Test_questions_options::create($option_data);
+                            $correct_option_id = $question_option->id;
+                        }
 
-                    } else {
-                        $question_option = Test_questions_options::create($option_data);
+                        $correct = $request->corrects[$index];
+                        if ($correct == $option_index) {
+                            $test_questions = Test_questions::where('id', $question_id)
+                                ->update(['correct_option_id' => $correct_option_id]);
+
+                        }
                     }
                 }
-
             }
         }
 

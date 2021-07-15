@@ -316,7 +316,6 @@ class TasksController extends Controller
                 $join->on('tasks_proposals.task_id', '=', 'tasks.id');
                 $join->on('tasks_proposals.member_id', '=','notifications.member_id');
             })
-
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('tasks.id');
         // $records = $records->paginate($perPage);
         $records = $records->get();
@@ -500,6 +499,43 @@ class TasksController extends Controller
             ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
         $record->where('tasks_proposals.id', $request->proposal_id);
+        $record = $record->first();
+        return response()->json([
+            'message' =>  ' Proposal Found ',
+            'records' => $record
+        ], 201);
+    }
+
+
+    public function api_get_proposal_by_id_expert(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'proposal_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+        $record = Tasks_proposals::select('tasks_proposals.id','tasks_proposals.task_id','tasks_proposals.subject','tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
+                'tasks_proposals.member_id as expert_id', 'experts.first_name as expert_first_name','experts.last_name as expert_last_name')
+            ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
+            ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
+        $record->where(['tasks_proposals.id'=> $request->proposal_id,'tasks_proposals.member_id'=>$member_record->id]);
         $record = $record->first();
         return response()->json([
             'message' =>  ' Proposal Found ',

@@ -155,6 +155,7 @@ Route::group([
         Route::post('/experts/change_profile', [ExpertsController::class, 'api_change_profile']);
         Route::post('/experts/get_expert_tasks', [TasksController::class, 'api_get_expert_tasks']);
         Route::post('/experts/get_expert_new_tasks', [TasksController::class, 'api_get_expert_new_tasks']);
+        Route::post('/experts/get_proposal_by_id', [TasksController::class, 'api_get_proposal_by_id_expert']);
 
 
         //Task
