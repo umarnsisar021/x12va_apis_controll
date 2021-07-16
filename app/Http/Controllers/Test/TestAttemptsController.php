@@ -112,8 +112,14 @@ class TestAttemptsController extends Controller
                 DB::raw('TIMESTAMPDIFF(MINUTE,tbl_test_attempts.start_time,tbl_test_attempts.end_time) as minutes'))
             ->where('test_attempts.id',$request['id'])->first();
 
-
-        $test_questions = Test_questions::where('test_id', $test_attempt->test_id)->get();
+        $attempt_id=$test_attempt->id;
+        $test_questions = Test_questions::where('test_id', $test_attempt->test_id)
+            ->select('test_questions.*','test_attempts_answers.option_id as select_option_id')
+            ->leftJoin('test_attempts_answers', function ($join) use($attempt_id) {
+                $join->on('test_attempts_answers.question_id', '=', 'test_questions.id');
+                $join->on('test_attempts_answers.attempt_id', '=', DB::raw($attempt_id));
+            })
+            ->get();
         foreach ($test_questions as $index => $test_question) {
             $test_questions_options = Test_questions_options::where('question_id', $test_question->id)
                 ->select('id', 'text as option')

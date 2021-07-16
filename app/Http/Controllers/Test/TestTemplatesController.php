@@ -169,7 +169,6 @@ class TestTemplatesController extends Controller
         $test = Tests::where('id', $id)
             ->update($validator);
 
-
         $options = [];
         $option_ids = [];
         if (isset($request->options) && is_array($request->options)) {
@@ -190,7 +189,8 @@ class TestTemplatesController extends Controller
                 if (empty($question)) {
                     continue;
                 }
-                $type = $request->types[$index];
+
+                $type = $request->types[$index]['key'];
                 $question_data = array(
                     'test_id' => $request->id,
                     'question' => $question,
