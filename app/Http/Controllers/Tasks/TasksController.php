@@ -190,7 +190,7 @@ class TasksController extends Controller
         if ($task) {
             $experts_records = Experts::where('experts_skills.skill_id', '=', $request->skill_id)
                 ->select('experts.member_id')
-                ->leftjoin('experts_skills', 'experts_skills.expert_id', '=', 'experts.id')->get();
+                ->leftjoin('experts_skills', 'experts_skills.member_id', '=', 'experts.member_id')->get();
 
             Tasks_status_histories::create([
                 'task_id' => $task->id,

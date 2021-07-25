@@ -72,7 +72,7 @@ class TestTemplatesController extends Controller
                 if (empty($question)) {
                     continue;
                 }
-                $type = $request->types[$index];
+                $type = $request->types[$index]['key'];
                 $question_data = array(
                     'test_id' => $test->id,
                     'question' => $question,

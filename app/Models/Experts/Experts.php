@@ -33,6 +33,7 @@ class Experts extends Authenticatable implements JWTSubject
             'avatar',
             'info',
             'status',
+            'register_reference_code'
     ];
 
     /**

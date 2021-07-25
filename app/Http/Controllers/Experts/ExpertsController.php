@@ -534,7 +534,6 @@ class ExpertsController extends Controller
             'gender' => 'required',
             'email' => 'required',
             'reference_code' => 'required',
-
         ]);
 
         if ($validator->fails()) {
@@ -567,6 +566,99 @@ class ExpertsController extends Controller
                 'message' => 'invalid Reference Code'
             ], 400);
         }
+
+        DB::beginTransaction();
+        $member = Members::where('id', $member_record->id)
+            ->update(['is_seller' => 1]);
+
+        if ($member) {
+
+            $expert = Experts::create(array_merge(
+                $validator->validated(),
+                [
+                    'member_id' => $member_record->id,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'd_o_b' => $request->d_o_b,
+                    'gender' => $request->gender,
+                    'email' => $request->email,
+                    'register_reference_code'=>$request->reference_code
+                ]
+            ));
+
+
+            $user_info=array(
+                'id'=>$member_record->id,
+                'first_name'=>$expert->first_name,
+                'last_name'=>$expert->last_name,
+                'email'=>$expert->email,
+                'is_seller'=>1,
+                'is_buyer'=>$member_record->is_buyer,
+                'mobile_number'=>$expert->mobile_number,
+                'username'=>$member_record->username,
+                'avatar' => $expert->avatar,
+            );
+
+            if ($expert) {
+                DB::commit();
+
+                return response()->json([
+                    'message' => 'Expert successfully Registered',
+                    'token' => $token,
+                    'user_info'=>$user_info
+                ], 201);
+            } else {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'some thing wrong'
+                ], 400);
+            }
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+
+
+    }
+
+    public function api_register_without_reference_code(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'd_o_b' => 'required',
+            'gender' => 'required',
+            'email' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+        $expert_record = Experts::where('member_id', '=', $member_record->id)->first();
+        if ($expert_record) {
+            return response()->json([
+                'message' => 'Already Applied',
+                'status'=>400
+            ], 200);
+        }
+
+
 
         DB::beginTransaction();
         $member = Members::where('id', $member_record->id)

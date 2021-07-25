@@ -149,6 +149,9 @@ Route::group([
 
         //Experts
         Route::post('/experts/register_as_a_reference_code', [ExpertsController::class, 'api_register_as_a_reference_code']);
+        Route::post('/experts/register_without_reference_code', [ExpertsController::class, 'api_register_without_reference_code']);
+
+
         Route::post('/experts/skill_add', [ExpertsController::class, 'api_skill_add']);
         Route::post('/experts/get_my_skills', [ExpertsController::class, 'api_get_my_skills']);
         Route::post('/experts/send_proposal_task', [TasksController::class, 'api_send_proposal_task']);

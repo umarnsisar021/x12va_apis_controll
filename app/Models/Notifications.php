@@ -27,6 +27,7 @@ class Notifications extends Model
         'member_id',
         'view',
         'notify',
+        'from_member_id'
     ];
 
 
