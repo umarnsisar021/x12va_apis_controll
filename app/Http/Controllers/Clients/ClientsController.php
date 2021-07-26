@@ -460,17 +460,14 @@ class ClientsController extends Controller
         ));
 
 
-        $clients = Clients::create(array_merge(
-            $validator->validated(),
-            [
+        $clients = Clients::create([
                 'member_id' => $member->id,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'd_o_b' => $request->d_o_b,
                 'gender' => $request->gender,
                 'email' => $request->email
-            ]
-        ));
+            ]);
         if (!$clients) {
             DB::rollBack();
             return response()->json([
