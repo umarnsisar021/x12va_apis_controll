@@ -200,9 +200,9 @@ class TestTemplatesController extends Controller
                     $question = Test_questions::where('id', $question_ids[$index])
                         ->update($question_data);
                     $question_id = $question_ids[$index];
-
                 } else {
-                    $question_id = Test_questions::create($question_data);
+                    $question_created = Test_questions::create($question_data);
+                    $question_id=$question_created->id;
                 }
 
                 if ($type == 1) {
