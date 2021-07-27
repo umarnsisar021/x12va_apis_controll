@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Accounts\TransactionsController;
 use App\Http\Controllers\Notifications\NotificationsController;
 use App\Http\Controllers\Tasks\TasksController;
 use App\Http\Controllers\Test\TestAttemptsController;
@@ -144,6 +145,8 @@ Route::group([
         Route::post('/clients/get_client_tasks', [TasksController::class, 'api_get_client_tasks']);
         Route::post('/clients/get_client_proposals', [TasksController::class, 'api_get_client_proposals']);
         Route::post('/clients/get_proposal_by_id', [TasksController::class, 'api_get_proposal_by_id']);
+        Route::post('/clients/assign_task', [TasksController::class, 'api_assign_task']);
+        Route::post('/clients/add_payment', [TransactionsController::class, 'api_add_payment']);
 
 
 

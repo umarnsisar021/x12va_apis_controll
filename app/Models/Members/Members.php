@@ -83,4 +83,18 @@ class Members extends Authenticatable implements JWTSubject
             'status' => 'required|int'
         ];
     }
+
+
+
+
+    public function transactions()
+    {
+        return $this->hasMany('App\Models\Accounts\Transactions','member_id','id')->where("status",1);
+    }
+
+    public function getBalanceAttribute(){
+        return $this->transactions->sum(function($trans){
+            return $trans->debit - $trans->credit;
+        });
+    }
 }
