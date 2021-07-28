@@ -532,8 +532,10 @@ class TasksController extends Controller
             ], 400);
         }
         $records = Tasks_proposals::where('tasks.client_id', $member_record->id)
-            ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.member_id as expert_id', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name')
+            ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.member_id as expert_id', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name'
+            ,'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name', 'experts.avatar as expert_avatar')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
+            ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
 
         if (isset($request->task_id) && !empty($request->task_id)) {
@@ -620,7 +622,7 @@ class TasksController extends Controller
         }
         $record = Tasks_proposals::where('tasks.client_id', $member_record->id)
             ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
-                'tasks_proposals.member_id as expert_id', 'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name')
+                'tasks_proposals.member_id as expert_id', 'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name', 'experts.avatar as expert_avatar')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
