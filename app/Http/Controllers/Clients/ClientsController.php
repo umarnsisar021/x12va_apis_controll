@@ -191,6 +191,15 @@ class ClientsController extends Controller
 
 
 
+    public function get_member_list_data(Request $request)
+    {
+        $members = Members::orderByDesc('members.id')
+            ->select('members.id','clients.first_name','clients.last_name','clients.avatar')
+      ->join('clients', 'clients.member_id', '=', 'members.id');
+        $members = $members->get();
+        return response()->json($members);
+    }
+
 
     public function api_login(Request $request)
     {
@@ -198,7 +207,7 @@ class ClientsController extends Controller
 
         if ($request->type == 0) {
             $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
+                'email' => 'required',
                 'password' => 'required|string|min:6',
             ]);
         } elseif ($request->type == 1) {
@@ -229,7 +238,7 @@ class ClientsController extends Controller
         }
 
         if ($request->type == 0) {
-            $member_record = Members::where('email', '=', $request->email)->first();
+            $member_record = Members::where('email', '=', $request->email)->OrWhere('username','=',$request->email)->first();
             if ($member_record) {
                 if (!Hash::check($request->password, $member_record->password)) {
                     return response()->json(['success' => false, 'message' => 'Login Fail, pls check password']);

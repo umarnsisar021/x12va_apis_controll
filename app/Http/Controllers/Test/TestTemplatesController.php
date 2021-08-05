@@ -206,6 +206,7 @@ class TestTemplatesController extends Controller
                 }
 
                 if ($type == 1) {
+                    if(isset($options[$index])){
                     foreach ($options[$index] as $option_index => $option) {
                         if (empty($option)) {
                             continue;
@@ -232,6 +233,7 @@ class TestTemplatesController extends Controller
                                 ->update(['correct_option_id' => $correct_option_id]);
 
                         }
+                    }
                     }
                 }
             }

@@ -331,7 +331,9 @@ class TasksController extends Controller
                     'type' =>1,
                     'status' => 1,
                     'credit' => $tasks_proposal->budget,
-                    'member_id' => $member_record->id
+                    'member_id' => $member_record->id,
+                    'description'=> 'Assign Task, Task #'.$task->id,
+                    'trans_purpose'=>1
                 ]
             );
 
@@ -384,7 +386,57 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['tasks.expert_id' => $member_record->id, 'tasks.status' => $request->status])
-            ->select('tasks.id', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
+            ->leftJoin('tasks_status_histories as task_assign', function ($join) {
+                $join->on('task_assign.task_id', '=', 'tasks.id');
+                $join->on('task_assign.status', '=', DB::raw('1'));
+            })
+            ->leftJoin('tasks_status_histories as task_complete', function ($join) {
+                $join->on('task_complete.task_id', '=', 'tasks.id');
+                $join->on('task_complete.status', '=', DB::raw('3'));
+            })
+            ->leftjoin('tasks_proposals', 'tasks_proposals.task_id', '=', 'tasks.id');
+        // $records = $records->paginate($perPage);
+        $records = $records->get();
+
+        return response()->json([
+            'message' => count($records) . ' Orders Found ',
+            'records' => $records
+        ], 201);
+
+
+    }
+
+
+    public function api_get_expert_tasks_send_proposals(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        // $perPage = request('perPage', 10);
+        // $search = request('q');
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $records = Tasks::where(['tasks_proposals.member_id' => $member_record->id])
+            ->select('tasks.id','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -484,7 +536,7 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['tasks.client_id' => $member_record->id, 'tasks.status' => $request->status])
-            ->select('tasks.id', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -573,7 +625,7 @@ class TasksController extends Controller
             ], 400);
         }
         $record = Tasks::where(['tasks.id' => $request->task_id])
-            ->select('tasks.*', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.id as proposal_id')
+            ->select('tasks.*','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.id as proposal_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -730,7 +782,7 @@ class TasksController extends Controller
             $notification = Notifications::create(array_merge(
                 $validator->validated(),
                 [
-                    'primary_id' => $task->id,
+                    'primary_id' => $tasks_proposal->id,
                     'title' => "Proposal Received From " . $member_record->first_name . " " . $member_record->last_name,
                     'message' => $tasks_proposal->problem_statement,
                     'type' => 2,

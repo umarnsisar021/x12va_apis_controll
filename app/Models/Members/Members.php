@@ -97,4 +97,16 @@ class Members extends Authenticatable implements JWTSubject
             return $trans->debit - $trans->credit;
         });
     }
+
+    public function getDebitAttribute(){
+        return $this->transactions->sum(function($trans){
+            return $trans->debit;
+        });
+    }
+
+    public function getCreditAttribute(){
+        return $this->transactions->sum(function($trans){
+            return $trans->credit;
+        });
+    }
 }

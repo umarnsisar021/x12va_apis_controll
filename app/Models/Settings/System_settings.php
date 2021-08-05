@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Accounts;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notifiable;
 
 
 
-class Transactions extends Model
+class System_settings extends Model
 {
     use HasFactory, Notifiable;
 
@@ -20,14 +20,8 @@ class Transactions extends Model
 
     protected $fillable = [
         'id',
-        'primary_table',
-        'primary_id',
-        'member_id',
-        'type',
-        'debit',
-        'credit',
-        'description',
-        'trans_purpose'
+        'key_name',
+        'value'
     ];
 
 
