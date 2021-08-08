@@ -745,7 +745,7 @@ class ExpertsController extends Controller
         $has_skill = ExpertsSkills::where(['skill_id' => $request->skill_id, 'member_id' => $member_record->id])->first();
         if ($has_skill) {
             return response()->json([
-                'message' => 'already have is skill',
+                'message' => 'already exist.',
                 'status' => 400
             ], 400);
         }
@@ -772,7 +772,106 @@ class ExpertsController extends Controller
 
 
     }
+    
+    
+     public function api_tool_add(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'name' => 'required'
+        ]);
 
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $has_tool = ExpertsTools::where(['name' => $request->name, 'member_id' => $member_record->id])->first();
+        if ($has_tool) {
+            return response()->json([
+                'message' => 'already exist.',
+                'status' => 400
+            ], 400);
+        }
+        DB::beginTransaction();
+        $experts_tools=ExpertsTools::create([
+            'name'=>$request->name,
+            'member_id' => $member_record->id
+        ]);
+
+        if ($experts_tools) {
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Successfully Added',
+                'status' => 201
+            ], 201);
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
+
+
+    }
+    
+    
+     public function api_tool_delete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'token' => 'required'
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+    
+            
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $ExpertsTools = ExpertsTools::find($request['id']);
+        if($ExpertsTools->delete()){
+            DB::commit();
+             return response()->json([
+                'message' => 'Tool successfully deleted'
+             ], 201);
+        }
+        else{
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
+    }   
+    
     public function api_get_my_skills(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -808,9 +907,42 @@ class ExpertsController extends Controller
             'records'=>$skills
         ], 201);
 
+    }
+    
+    
+    public function api_get_my_tools(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $tools = ExpertsTools::where([ 'member_id' => $member_record->id])->get();
+
+
+        return response()->json([
+            'message' => 'Successfully Added',
+            'records'=>$tools
+        ], 201);
 
     }
-
 
     public function api_change_profile(Request $request)
     {

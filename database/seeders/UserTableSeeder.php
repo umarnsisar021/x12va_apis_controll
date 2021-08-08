@@ -1,7 +1,9 @@
 <?php
+namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class UserTableSeeder extends Seeder
 {
@@ -12,12 +14,12 @@ class UserTableSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('users')->insert([
+        User::create([
             'name' => 'Admin',
-            'email' => 'admin@demo.com',
-            'password' => app('hash')->make('admin'),
-            'role' =>'admin',
-            'remember_token' => str_random(10),
+            'email' => 'admin@admin.com',
+            'password' => app('hash')->make('password'),
+            'role_id' =>'1',
+            'remember_token' => Str::random(10),
         ]);
     }
 }

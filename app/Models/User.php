@@ -23,7 +23,7 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'role',
+        'role_id',
         'avatar'
     ];
 
@@ -71,7 +71,7 @@ class User extends Authenticatable implements JWTSubject
             'name' => 'required|string|between:2,100',
             'email' => 'unique:users,email,' . $id . '|required',
             'password' => 'required|string|confirmed|min:6',
-            'role' => 'required|string|between:2,100'
+            'role_id' => 'required|string|between:2,100'
         ];
     }
 }

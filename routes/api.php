@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Accounts\TransactionsController;
 use App\Http\Controllers\Notifications\NotificationsController;
+use App\Http\Controllers\Settings\RolesController;
 use App\Http\Controllers\Settings\SystemSettingsController;
 use App\Http\Controllers\Tasks\TasksController;
 use App\Http\Controllers\Test\TestAttemptsController;
@@ -135,6 +136,16 @@ Route::group([
 
     //System Settings
     Route::post('/settings/system_settings/get', [SystemSettingsController::class, 'get']);
+    Route::post('/settings/system_settings/update', [SystemSettingsController::class, 'update']);
+
+
+    //Roles
+    Route::post('/settings/roles/get_data', [RolesController::class, 'get_data']);
+    Route::post('/settings/roles/add', [RolesController::class, 'add']);
+    Route::post('/settings/roles/update', [RolesController::class, 'update']);
+    Route::post('/settings/roles/delete', [RolesController::class, 'delete']);
+    Route::post('/settings/roles/get', [RolesController::class, 'get']);
+
 
 
     Route::group([
@@ -172,7 +183,10 @@ Route::group([
 
 
             Route::post('/experts/skill_add', [ExpertsController::class, 'api_skill_add']);
+            Route::post('/experts/tool_add', [ExpertsController::class, 'api_tool_add']);
+            Route::post('/experts/tool_delete', [ExpertsController::class, 'api_tool_delete']);
             Route::post('/experts/get_my_skills', [ExpertsController::class, 'api_get_my_skills']);
+            Route::post('/experts/get_my_tools', [ExpertsController::class, 'api_get_my_tools']);
             Route::post('/experts/send_proposal_task', [TasksController::class, 'api_send_proposal_task']);
             Route::post('/experts/change_profile', [ExpertsController::class, 'api_change_profile']);
             Route::post('/experts/get_expert_tasks', [TasksController::class, 'api_get_expert_tasks']);

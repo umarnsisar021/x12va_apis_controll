@@ -32,7 +32,7 @@ class UsersController extends Controller
         }
 
         if (!empty($role)) {
-            $user->where('role', $role);
+            $user->where('role_id', $role);
         }
 
         $users = $user->paginate($perPage);
@@ -46,7 +46,7 @@ class UsersController extends Controller
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
-            'role' => 'required|string|between:2,100',
+            'role_id' => 'required|string|between:2,100',
         ]);
 
         if ($validator->fails()) {
