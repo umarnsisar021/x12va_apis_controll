@@ -184,9 +184,15 @@ Route::group([
 
             Route::post('/experts/skill_add', [ExpertsController::class, 'api_skill_add']);
             Route::post('/experts/tool_add', [ExpertsController::class, 'api_tool_add']);
+            Route::post('/experts/language_add', [ExpertsController::class, 'api_language_add']);
+            Route::post('/experts/education_add', [ExpertsController::class, 'api_education_add']);
             Route::post('/experts/tool_delete', [ExpertsController::class, 'api_tool_delete']);
+            Route::post('/experts/education_delete', [ExpertsController::class, 'api_education_delete']);
+            Route::post('/experts/language_delete', [ExpertsController::class, 'api_language_delete']);
             Route::post('/experts/get_my_skills', [ExpertsController::class, 'api_get_my_skills']);
             Route::post('/experts/get_my_tools', [ExpertsController::class, 'api_get_my_tools']);
+            Route::post('/experts/get_my_languages', [ExpertsController::class, 'api_get_my_languages']);
+            Route::post('/experts/get_my_educations', [ExpertsController::class, 'api_get_my_educations']);
             Route::post('/experts/send_proposal_task', [TasksController::class, 'api_send_proposal_task']);
             Route::post('/experts/change_profile', [ExpertsController::class, 'api_change_profile']);
             Route::post('/experts/get_expert_tasks', [TasksController::class, 'api_get_expert_tasks']);

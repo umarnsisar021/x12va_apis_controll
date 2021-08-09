@@ -9,6 +9,7 @@ use App\Models\Experts\Experts;
 use App\Models\Experts\ExpertsEducation;
 use App\Models\Experts\ExpertsSkills;
 use App\Models\Experts\ExpertsTools;
+use App\Models\Experts\ExpertsLanguages;
 use App\Models\Members\Members;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -192,12 +193,12 @@ class ExpertsController extends Controller
 
         $expert = Experts::find($request['id']);
         $member = Members::find($expert['member_id']);
-        $education = ExpertsEducation::where('expert_id', '=', $expert['id'])->get();
+        $education = ExpertsEducation::where('member_id', '=', $expert['member_id'])->get();
         $skills = ExpertsSkills::where('member_id', '=', $member['id'])
             ->join('skills', 'experts_skills.skill_id', '=', 'skills.id')
             ->select('experts_skills.*', 'skills.name', 'skills.short_code')
             ->get();
-        $tools = ExpertsTools::where('expert_id', '=', $expert['id'])->get();
+        $tools = ExpertsTools::where('member_id', '=', $expert['member_id'])->get();
         return response()->json([
             'message' => 'Get Expert successfully',
             'member' => $member,
@@ -229,8 +230,15 @@ class ExpertsController extends Controller
             ];
             return response()->json($data, 400);
         }
+        $expert = Experts::find($request->expert_id);
 
-        $ExpertsEducation = ExpertsEducation::create($validator->validated());
+        $ExpertsEducation = ExpertsEducation::create([
+            'member_id' => $expert->member_id,
+            'institute_name'=>$request->institute_name,
+            'degree' => $request->degree,
+            'date_from' => $request->date_from,
+            'date_to' => $request->date_to,
+        ]);
         return response()->json([
             'message' => 'Expert`s Education successfully created',
             'ExpertsEducation' => $ExpertsEducation
@@ -327,7 +335,12 @@ class ExpertsController extends Controller
         $id = $validator['id'];
         unset($validator['id']);
         ExpertsEducation::where('id', $id)
-            ->update($validator);
+            ->update([
+                'institute_name'=>$request->institute_name,
+                'degree' => $request->degree,
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to,
+            ]);
         return response()->json([
             'message' => 'Data successfully updated',
             'ExpertsEducation' => $validator
@@ -772,9 +785,9 @@ class ExpertsController extends Controller
 
 
     }
-    
-    
-     public function api_tool_add(Request $request)
+
+
+    public function api_tool_add(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
@@ -826,12 +839,107 @@ class ExpertsController extends Controller
                 'status' => 400
             ], 400);
         }
-
-
     }
-    
-    
-     public function api_tool_delete(Request $request)
+
+    public function api_language_add(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'name' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $has_tool = ExpertsLanguages::where(['name' => $request->name, 'member_id' => $member_record->id])->first();
+        if ($has_tool) {
+            return response()->json([
+                'message' => 'already exist.',
+                'status' => 400
+            ], 400);
+        }
+        DB::beginTransaction();
+        $experts_tools=ExpertsLanguages::create([
+            'name'=>$request->name,
+            'member_id' => $member_record->id
+        ]);
+
+        if ($experts_tools) {
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Successfully Added',
+                'status' => 201
+            ], 201);
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
+    }
+
+    public function api_education_add(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required|string',
+            'institute_name' => 'required|string',
+            'degree' => 'required|string',
+            'date_from' => 'required|string',
+            'date_to' => 'required|string',
+
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $ExpertsEducation = ExpertsEducation::create(
+            [
+                'member_id' => $member_record->id,
+                'institute_name'=>$request->institute_name,
+                'degree' => $request->degree,
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to
+            ]
+        );
+        return response()->json([
+            'message' => 'Expert`s Education successfully created',
+            'ExpertsEducation' => $ExpertsEducation
+        ], 201);
+    }
+
+    public function api_tool_delete(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required',
@@ -845,8 +953,8 @@ class ExpertsController extends Controller
             ];
             return response()->json($data, 400);
         }
-    
-            
+
+
         $token = $request->token;
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
@@ -859,9 +967,9 @@ class ExpertsController extends Controller
         $ExpertsTools = ExpertsTools::find($request['id']);
         if($ExpertsTools->delete()){
             DB::commit();
-             return response()->json([
+            return response()->json([
                 'message' => 'Tool successfully deleted'
-             ], 201);
+            ], 201);
         }
         else{
             DB::rollBack();
@@ -870,8 +978,90 @@ class ExpertsController extends Controller
                 'status' => 400
             ], 400);
         }
-    }   
-    
+    }
+
+
+    public function api_education_delete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'token' => 'required'
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $ExpertsEducation = ExpertsEducation::find($request['id']);
+        if($ExpertsEducation->delete()){
+            DB::commit();
+            return response()->json([
+                'message' => 'Tool successfully deleted'
+            ], 201);
+        }
+        else{
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
+    }
+    public function api_language_delete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'token' => 'required'
+        ]);
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        $ExpertsTools = ExpertsLanguages::find($request['id']);
+        if($ExpertsTools->delete()){
+            DB::commit();
+            return response()->json([
+                'message' => 'Tool successfully deleted'
+            ], 201);
+        }
+        else{
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Some thing wrong',
+                'status' => 400
+            ], 400);
+        }
+    }
+
     public function api_get_my_skills(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -908,8 +1098,8 @@ class ExpertsController extends Controller
         ], 201);
 
     }
-    
-    
+
+
     public function api_get_my_tools(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -935,6 +1125,74 @@ class ExpertsController extends Controller
         }
 
         $tools = ExpertsTools::where([ 'member_id' => $member_record->id])->get();
+
+
+        return response()->json([
+            'message' => 'Successfully Added',
+            'records'=>$tools
+        ], 201);
+
+    }
+
+    public function api_get_my_languages(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $tools = ExpertsLanguages::where([ 'member_id' => $member_record->id])->get();
+
+
+        return response()->json([
+            'message' => 'Successfully Added',
+            'records'=>$tools
+        ], 201);
+
+    }
+
+    public function api_get_my_educations(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token'
+            ], 400);
+        }
+
+        $tools = ExpertsEducation::where([ 'member_id' => $member_record->id])->get();
 
 
         return response()->json([
@@ -988,8 +1246,8 @@ class ExpertsController extends Controller
         }
 
         DB::beginTransaction();
-       $expert_result=     Experts::where('id', $expert->id)
-                ->update(['avatar'=>$avatar]);
+        $expert_result=     Experts::where('id', $expert->id)
+            ->update(['avatar'=>$avatar]);
         if ($expert_result) {
 
             DB::commit();

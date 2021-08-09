@@ -20,7 +20,7 @@ class ExpertsEducation extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
-        'expert_id',
+        'member_id',
         'institute_name',
         'degree',
         'date_from',
@@ -68,7 +68,7 @@ class ExpertsEducation extends Authenticatable implements JWTSubject
     public static function rules($id)
     {
         return [
-            'expert_id' => 'required|string|between:2,100',
+            'member_id' => 'required|string|between:2,100',
             'institute_name' => 'required|string|between:2,150',
             'degree' => 'required|string',
             'date_from' => 'string',
