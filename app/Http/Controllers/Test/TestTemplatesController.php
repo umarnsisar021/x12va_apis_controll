@@ -319,7 +319,8 @@ class TestTemplatesController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
         $test_record = Tests::where('skill_id', $request->skill_id)

@@ -35,7 +35,8 @@ class NotificationsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
 
@@ -99,7 +100,8 @@ class NotificationsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
 
@@ -149,7 +151,8 @@ class NotificationsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
 

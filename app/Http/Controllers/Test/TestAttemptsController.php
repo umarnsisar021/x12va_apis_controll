@@ -206,7 +206,8 @@ class TestAttemptsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
         $test_attempt = Test_attempts::create(
@@ -255,7 +256,8 @@ class TestAttemptsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
 

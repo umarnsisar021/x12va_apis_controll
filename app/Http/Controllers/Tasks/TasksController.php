@@ -167,7 +167,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
 
@@ -251,7 +251,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
 
@@ -381,7 +381,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
 
@@ -431,7 +431,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
 
@@ -481,7 +481,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
 
@@ -531,7 +531,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
 
@@ -580,7 +580,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
         $records = Tasks_proposals::where('tasks.client_id', $member_record->id)
@@ -621,7 +621,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
         $record = Tasks::where(['tasks.id' => $request->task_id])
@@ -669,7 +669,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
         $record = Tasks_proposals::where('tasks.client_id', $member_record->id)
@@ -707,7 +707,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405
             ], 400);
         }
         $record = Tasks_proposals::select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
@@ -749,7 +749,8 @@ class TasksController extends Controller
             ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',                 'status' => 405,
+                'status'=>405
             ], 400);
         }
 

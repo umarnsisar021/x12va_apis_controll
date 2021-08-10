@@ -145,6 +145,7 @@ Route::group([
     Route::post('/settings/roles/update', [RolesController::class, 'update']);
     Route::post('/settings/roles/delete', [RolesController::class, 'delete']);
     Route::post('/settings/roles/get', [RolesController::class, 'get']);
+    Route::post('/settings/roles/get_modules', [RolesController::class, 'get_modules']);
 
 
 

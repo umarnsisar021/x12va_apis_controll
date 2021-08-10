@@ -234,7 +234,7 @@ class ExpertsController extends Controller
 
         $ExpertsEducation = ExpertsEducation::create([
             'member_id' => $expert->member_id,
-            'institute_name'=>$request->institute_name,
+            'institute_name' => $request->institute_name,
             'degree' => $request->degree,
             'date_from' => $request->date_from,
             'date_to' => $request->date_to,
@@ -336,7 +336,7 @@ class ExpertsController extends Controller
         unset($validator['id']);
         ExpertsEducation::where('id', $id)
             ->update([
-                'institute_name'=>$request->institute_name,
+                'institute_name' => $request->institute_name,
                 'degree' => $request->degree,
                 'date_from' => $request->date_from,
                 'date_to' => $request->date_to,
@@ -562,14 +562,14 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
         $expert_record = Experts::where('member_id', '=', $member_record->id)->first();
         if ($expert_record) {
             return response()->json([
                 'message' => 'Already Applied',
-                'status'=>400
+                'status' => 400
             ], 200);
         }
 
@@ -595,20 +595,20 @@ class ExpertsController extends Controller
                     'd_o_b' => $request->d_o_b,
                     'gender' => $request->gender,
                     'email' => $request->email,
-                    'register_reference_code'=>$request->reference_code
+                    'register_reference_code' => $request->reference_code
                 ]
             ));
 
 
-            $user_info=array(
-                'id'=>$member_record->id,
-                'first_name'=>$expert->first_name,
-                'last_name'=>$expert->last_name,
-                'email'=>$expert->email,
-                'is_seller'=>1,
-                'is_buyer'=>$member_record->is_buyer,
-                'mobile_number'=>$expert->mobile_number,
-                'username'=>$member_record->username,
+            $user_info = array(
+                'id' => $member_record->id,
+                'first_name' => $expert->first_name,
+                'last_name' => $expert->last_name,
+                'email' => $expert->email,
+                'is_seller' => 1,
+                'is_buyer' => $member_record->is_buyer,
+                'mobile_number' => $expert->mobile_number,
+                'username' => $member_record->username,
                 'avatar' => $expert->avatar,
             );
 
@@ -618,7 +618,7 @@ class ExpertsController extends Controller
                 return response()->json([
                     'message' => 'Expert successfully Registered',
                     'token' => $token,
-                    'user_info'=>$user_info
+                    'user_info' => $user_info
                 ], 201);
             } else {
                 DB::rollBack();
@@ -660,17 +660,16 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
         $expert_record = Experts::where('member_id', '=', $member_record->id)->first();
         if ($expert_record) {
             return response()->json([
                 'message' => 'Already Applied',
-                'status'=>400
+                'status' => 400
             ], 200);
         }
-
 
 
         DB::beginTransaction();
@@ -692,15 +691,15 @@ class ExpertsController extends Controller
             ));
 
 
-            $user_info=array(
-                'id'=>$member_record->id,
-                'first_name'=>$expert->first_name,
-                'last_name'=>$expert->last_name,
-                'email'=>$expert->email,
-                'is_seller'=>1,
-                'is_buyer'=>$member_record->is_buyer,
-                'mobile_number'=>$expert->mobile_number,
-                'username'=>$member_record->username,
+            $user_info = array(
+                'id' => $member_record->id,
+                'first_name' => $expert->first_name,
+                'last_name' => $expert->last_name,
+                'email' => $expert->email,
+                'is_seller' => 1,
+                'is_buyer' => $member_record->is_buyer,
+                'mobile_number' => $expert->mobile_number,
+                'username' => $member_record->username,
                 'avatar' => $expert->avatar,
             );
 
@@ -710,7 +709,7 @@ class ExpertsController extends Controller
                 return response()->json([
                     'message' => 'Expert successfully Registered',
                     'token' => $token,
-                    'user_info'=>$user_info
+                    'user_info' => $user_info
                 ], 201);
             } else {
                 DB::rollBack();
@@ -727,7 +726,6 @@ class ExpertsController extends Controller
 
 
     }
-
 
 
     public function api_skill_add(Request $request)
@@ -751,7 +749,7 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
@@ -763,8 +761,8 @@ class ExpertsController extends Controller
             ], 400);
         }
         DB::beginTransaction();
-        $experts_skills=ExpertsSkills::create([
-            'skill_id'=>$request->skill_id,
+        $experts_skills = ExpertsSkills::create([
+            'skill_id' => $request->skill_id,
             'member_id' => $member_record->id
         ]);
 
@@ -808,7 +806,7 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
@@ -820,8 +818,8 @@ class ExpertsController extends Controller
             ], 400);
         }
         DB::beginTransaction();
-        $experts_tools=ExpertsTools::create([
-            'name'=>$request->name,
+        $experts_tools = ExpertsTools::create([
+            'name' => $request->name,
             'member_id' => $member_record->id
         ]);
 
@@ -862,7 +860,7 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
@@ -874,8 +872,8 @@ class ExpertsController extends Controller
             ], 400);
         }
         DB::beginTransaction();
-        $experts_tools=ExpertsLanguages::create([
-            'name'=>$request->name,
+        $experts_tools = ExpertsLanguages::create([
+            'name' => $request->name,
             'member_id' => $member_record->id
         ]);
 
@@ -920,14 +918,14 @@ class ExpertsController extends Controller
 
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         $ExpertsEducation = ExpertsEducation::create(
             [
                 'member_id' => $member_record->id,
-                'institute_name'=>$request->institute_name,
+                'institute_name' => $request->institute_name,
                 'degree' => $request->degree,
                 'date_from' => $request->date_from,
                 'date_to' => $request->date_to
@@ -959,19 +957,18 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         DB::beginTransaction();
         $ExpertsTools = ExpertsTools::find($request['id']);
-        if($ExpertsTools->delete()){
+        if ($ExpertsTools->delete()) {
             DB::commit();
             return response()->json([
                 'message' => 'Tool successfully deleted'
             ], 201);
-        }
-        else{
+        } else {
             DB::rollBack();
             return response()->json([
                 'message' => 'Some thing wrong',
@@ -1001,19 +998,18 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         DB::beginTransaction();
         $ExpertsEducation = ExpertsEducation::find($request['id']);
-        if($ExpertsEducation->delete()){
+        if ($ExpertsEducation->delete()) {
             DB::commit();
             return response()->json([
                 'message' => 'Tool successfully deleted'
             ], 201);
-        }
-        else{
+        } else {
             DB::rollBack();
             return response()->json([
                 'message' => 'Some thing wrong',
@@ -1021,6 +1017,7 @@ class ExpertsController extends Controller
             ], 400);
         }
     }
+
     public function api_language_delete(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -1041,19 +1038,18 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         DB::beginTransaction();
         $ExpertsTools = ExpertsLanguages::find($request['id']);
-        if($ExpertsTools->delete()){
+        if ($ExpertsTools->delete()) {
             DB::commit();
             return response()->json([
                 'message' => 'Tool successfully deleted'
             ], 201);
-        }
-        else{
+        } else {
             DB::rollBack();
             return response()->json([
                 'message' => 'Some thing wrong',
@@ -1082,19 +1078,19 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
-        $skills = ExpertsSkills::where([ 'member_id' => $member_record->id])
-            ->select('skills.id','skills.name','experts_skills.status')
+        $skills = ExpertsSkills::where(['member_id' => $member_record->id])
+            ->select('skills.id', 'skills.name', 'experts_skills.status')
             ->leftjoin('skills', 'skills.id', '=', 'experts_skills.skill_id')
             ->get();
 
 
         return response()->json([
             'message' => 'Successfully Added',
-            'records'=>$skills
+            'records' => $skills
         ], 201);
 
     }
@@ -1120,16 +1116,16 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
-        $tools = ExpertsTools::where([ 'member_id' => $member_record->id])->get();
+        $tools = ExpertsTools::where(['member_id' => $member_record->id])->get();
 
 
         return response()->json([
             'message' => 'Successfully Added',
-            'records'=>$tools
+            'records' => $tools
         ], 201);
 
     }
@@ -1154,16 +1150,16 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
-        $tools = ExpertsLanguages::where([ 'member_id' => $member_record->id])->get();
+        $tools = ExpertsLanguages::where(['member_id' => $member_record->id])->get();
 
 
         return response()->json([
             'message' => 'Successfully Added',
-            'records'=>$tools
+            'records' => $tools
         ], 201);
 
     }
@@ -1188,16 +1184,16 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
-        $tools = ExpertsEducation::where([ 'member_id' => $member_record->id])->get();
+        $tools = ExpertsEducation::where(['member_id' => $member_record->id])->get();
 
 
         return response()->json([
             'message' => 'Successfully Added',
-            'records'=>$tools
+            'records' => $tools
         ], 201);
 
     }
@@ -1222,7 +1218,8 @@ class ExpertsController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token'
+                'message' => 'invalid token',
+                'status' => 405
             ], 400);
         }
 
@@ -1238,7 +1235,7 @@ class ExpertsController extends Controller
         $avatar = '';
         if ($request->avatar) {
             $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
-        }else{
+        } else {
             return response()->json([
                 'message' => 'Avatar not found',
                 'status' => 400
@@ -1246,8 +1243,8 @@ class ExpertsController extends Controller
         }
 
         DB::beginTransaction();
-        $expert_result=     Experts::where('id', $expert->id)
-            ->update(['avatar'=>$avatar]);
+        $expert_result = Experts::where('id', $expert->id)
+            ->update(['avatar' => $avatar]);
         if ($expert_result) {
 
             DB::commit();
