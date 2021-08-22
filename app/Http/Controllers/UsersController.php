@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Settings\Roles\Roles;
 use Illuminate\Http\Request;
 
 use App\Models\User;
@@ -46,7 +47,7 @@ class UsersController extends Controller
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
-            'role_id' => 'required|string|between:2,100',
+            'role_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -190,4 +191,18 @@ class UsersController extends Controller
         }
         return $result;
     }
+
+
+
+    public function get_roles(Request $request)
+    {
+        $records = Roles::where('status',1)->get();
+        return response()->json([
+            'message' => 'Get Records successfully',
+            'records' => $records
+        ], 201);
+    }
+
+
+
 }

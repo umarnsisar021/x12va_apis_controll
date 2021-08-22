@@ -5,7 +5,10 @@ use App\Models\Accounts\Transactions;
 use App\Models\Experts\Experts;
 use App\Models\Tasks\Tasks_proposals;
 use App\Models\Tasks\Tasks;
+use App\Models\Tasks\Tasks_remainders;
 use App\Models\Tasks\Tasks_status_histories;
+use App\Models\Tasks\Tasks_updates;
+use DateTime;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Clients;
@@ -167,7 +170,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
@@ -200,8 +203,7 @@ class TasksController extends Controller
             ]);
 
             foreach ($experts_records as $expert_record) {
-                $notification = Notifications::create(array_merge(
-                    $validator->validated(),
+                $notification = Notifications::create(
                     [
                         'primary_id' => $task->id,
                         'title' => "New Task Request Received",
@@ -211,7 +213,7 @@ class TasksController extends Controller
                         'from_member_id' => $member_record->id
 
                     ]
-                ));
+                );
             }
             DB::commit();
             return response()->json([
@@ -251,7 +253,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
@@ -263,8 +265,6 @@ class TasksController extends Controller
         }
 
         $task = Tasks::where('id', $tasks_proposal->task_id)->first();
-
-
 
 
         if (!$task) {
@@ -284,7 +284,6 @@ class TasksController extends Controller
                 'message' => 'Task already Assigned'
             ], 404);
         }
-
 
         if ($tasks_proposal->budget > $member_record->balance) {
             return response()->json([
@@ -311,8 +310,7 @@ class TasksController extends Controller
             ]);
 
 
-            $notification = Notifications::create(array_merge(
-                $validator->validated(),
+            $notification = Notifications::create(
                 [
                     'primary_id' => $task->id,
                     'title' => "Task Assigned",
@@ -322,20 +320,38 @@ class TasksController extends Controller
                     'from_member_id' => $member_record->id
 
                 ]
-            ));
+            );
 
             $transaction = Transactions::create(
                 [
                     'primary_id' => $task->id,
-                    'primary_table' =>(new Tasks)->getTable(),
-                    'type' =>1,
+                    'primary_table' => (new Tasks)->getTable(),
+                    'type' => 1,
                     'status' => 1,
                     'credit' => $tasks_proposal->budget,
                     'member_id' => $member_record->id,
-                    'description'=> 'Assign Task, Task #'.$task->id,
-                    'trans_purpose'=>1
+                    'description' => 'Assign Task, Task #' . $task->id,
+                    'trans_purpose' => 1
                 ]
             );
+
+
+            if ($task->days >= 3) {
+                $days_remainders = round($task->days / 3);
+                $Date1 = date('Y-m-d H:i');
+                $date = new DateTime($Date1);
+                $date->modify('+' . $days_remainders . ' day');
+                for ($i = 0; $i < $days_remainders; $i++) {
+                    $date = new DateTime($Date1);
+                    $date->modify('+' . $days_remainders . ' day');
+                    $Date2 = $date->format('Y-m-d H:i');
+                    $Date1 = $Date2;
+                    Tasks_remainders::create([
+                        'task_id' => $task->id,
+                        'date' => $Date2
+                    ]);
+                }
+            }
 
             if (!$transaction) {
                 DB::rollBack();
@@ -381,12 +397,12 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         $records = Tasks::where(['tasks.expert_id' => $member_record->id, 'tasks.status' => $request->status])
-            ->select('tasks.id','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -431,12 +447,12 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         $records = Tasks::where(['tasks_proposals.member_id' => $member_record->id])
-            ->select('tasks.id','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -481,7 +497,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
@@ -531,12 +547,12 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
 
         $records = Tasks::where(['tasks.client_id' => $member_record->id, 'tasks.status' => $request->status])
-            ->select('tasks.id','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -580,12 +596,12 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
         $records = Tasks_proposals::where('tasks.client_id', $member_record->id)
             ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.member_id as expert_id', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name'
-            ,'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name', 'experts.avatar as expert_avatar')
+                , 'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name', 'experts.avatar as expert_avatar')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id');
@@ -621,11 +637,11 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
         $record = Tasks::where(['tasks.id' => $request->task_id])
-            ->select('tasks.*','tasks.description as task_description','tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.id as proposal_id')
+            ->select('tasks.*', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.id as proposal_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -669,7 +685,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
         $record = Tasks_proposals::where('tasks.client_id', $member_record->id)
@@ -707,7 +723,7 @@ class TasksController extends Controller
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405
+                'message' => 'invalid token', 'status' => 405
             ], 400);
         }
         $record = Tasks_proposals::select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
@@ -749,8 +765,8 @@ class TasksController extends Controller
             ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
         if (!$member_record || empty($token)) {
             return response()->json([
-                'message' => 'invalid token',                 'status' => 405,
-                'status'=>405
+                'message' => 'invalid token', 'status' => 405,
+                'status' => 405
             ], 400);
         }
 
@@ -780,8 +796,7 @@ class TasksController extends Controller
         ));
 
         if ($tasks_proposal) {
-            $notification = Notifications::create(array_merge(
-                $validator->validated(),
+            $notification = Notifications::create(
                 [
                     'primary_id' => $tasks_proposal->id,
                     'title' => "Proposal Received From " . $member_record->first_name . " " . $member_record->last_name,
@@ -790,12 +805,105 @@ class TasksController extends Controller
                     'member_id' => $task->client_id,
                     'from_member_id' => $member_record->id,
                 ]
-            ));
+            );
 
             DB::commit();
             return response()->json([
                 'message' => 'Proposal successfully Send',
                 'proposal_id' => $tasks_proposal->id
+            ], 201);
+
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+
+
+    }
+
+
+    public function api_update_task(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'task_id' => 'required',
+            'note' => 'required'
+        ]);
+
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->select('members.*', 'experts.first_name', 'experts.last_name')
+            ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token',
+                'status' => 405,
+                'status' => 405
+            ], 400);
+        }
+
+        if ($member_record->is_seller != 1) {
+            return response()->json([
+                'message' => 'member not expert'
+            ], 400);
+        }
+        $task = Tasks::where('id', '=', $request->task_id)->first();
+        if (!$task) {
+            return response()->json([
+                'message' => 'Task not found'
+            ], 400);
+        }
+
+        if($task->expert_id!=$member_record->id){
+            return response()->json([
+                'message' => 'You have not permission to update this task'
+            ], 404);
+        }
+
+
+        $document = '';
+        if (isset($request->document) && !empty($request->document)) {
+            $file_name = $member_record->id . uniqid('', true);
+            $document = $this->uploadfile_to_s3($request->document, $file_name, 'documents');
+        }
+
+        DB::beginTransaction();
+        $tasks_update = Tasks_updates::create(
+            [
+                'member_id' => $member_record->id,
+                'task_id' => $request->task_id,
+                'note' => $request->note,
+                'document' => $document
+            ]
+        );
+
+        if ($tasks_update) {
+            $notification = Notifications::create(
+                [
+                    'primary_id' => $tasks_update->id,
+                    'title' => "Task Update  Task #" . $request->task_id,
+                    'message' => $tasks_update->note,
+                    'type' => 4,
+                    'member_id' => $task->client_id,
+                    'from_member_id' => $member_record->id,
+                ]
+            );
+
+            DB::commit();
+            return response()->json([
+                'message' => 'successfully Update',
+                'update' => $tasks_update->id
             ], 201);
 
         } else {

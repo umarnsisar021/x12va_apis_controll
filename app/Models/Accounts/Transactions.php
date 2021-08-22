@@ -27,7 +27,8 @@ class Transactions extends Model
         'debit',
         'credit',
         'description',
-        'trans_purpose'
+        'trans_purpose',
+        'status'
     ];
 
 

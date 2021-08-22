@@ -50,6 +50,7 @@ Route::group([
     Route::post('/users/update', [UsersController::class, 'update']);
     Route::post('/users/delete', [UsersController::class, 'delete']);
     Route::post('/users/get', [UsersController::class, 'get']);
+    Route::post('/users/get_roles', [UsersController::class, 'get_roles']);
 
 
     //Skill
@@ -202,8 +203,14 @@ Route::group([
 
             Route::post('/experts/get_expert_tasks_send_proposals', [TasksController::class, 'api_get_expert_tasks_send_proposals']);
 
+            Route::post('/experts/update_task', [TasksController::class, 'api_update_task']);
+
+
+
+
             //Task
             Route::post('/tasks/get_task_by_id', [TasksController::class, 'api_get_task_by_id']);
+
 
 
             //Test
@@ -222,16 +229,18 @@ Route::group([
 
 
 Route::get('/clear', function () {
-    return "Cleared!";
+//    var_dump(DB::connection());die;
+//    return "Cleared!";
 
 //    Artisan::call('storage:link');
-//    Artisan::call('cache:clear');
-//    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+//
 //    Artisan::call('config:cache');
 //    Artisan::call('view:clear');
-    Artisan::call('route:cache');
     Artisan::call('route:clear');
-
+    Artisan::call('route:cache');
+//    Artisan::call('config:clear');
+//    Artisan::call('config:cache');
     Artisan::call('optimize');
     return "Cleared!";
 });

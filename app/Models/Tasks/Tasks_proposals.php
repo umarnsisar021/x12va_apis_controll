@@ -26,7 +26,7 @@ class Tasks_proposals extends Model
         'problem_statement',
         'budget',
         'description',
-        'status '
+        'status'
     ];
 
 
