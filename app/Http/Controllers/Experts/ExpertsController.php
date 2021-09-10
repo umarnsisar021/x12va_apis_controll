@@ -23,6 +23,10 @@ class ExpertsController extends Controller
     public function __construct()
     {
         $this->global = config('app.global');
+        $this->middleware('can:experts/experts-view')->only(['get_data','get']);
+        $this->middleware('can:experts/experts-add')->only(['add','addExpertEducation','addExpertSkills','addExpertTool']);
+        $this->middleware('can:experts/experts-edit')->only(['update','status_change','updateEducation','changeExpertPassword']);
+        $this->middleware('can:experts/experts-delete')->only(['delete','deleteExpertEducation','deleteExpertSkill','deleteExpertTool']);
     }
 
     public function get_data(Request $request)
@@ -126,28 +130,33 @@ class ExpertsController extends Controller
 
     public function update(Request $request)
     {
-        $rules = Experts::rules($request['id']);
+        $rules = [
+            'first_name' => 'required|string|between:2,100',
+            'last_name' => 'required|string|between:2,100',
+        ];
         $rules['id'] = ['required', 'exists:experts,id'];
-        if (empty($request['password'])) {
-            unset($request['password']);
-            unset($rules['password']);
-        }
-        if (empty($request['status'])) {
-            unset($request['status']);
-            unset($rules['status']);
-        }
+
 
         $validator = Validator::make($request->all(), $rules);
 
+        if($validator->fails()){
+            $validators=$validator->errors()->toArray();
+            $data=[
+                'validations'=>$validators,
+                'message'=>$validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
 
         $validator = $validator->validated();
+
         $id = $validator['id'];
         unset($validator['id']);
         Experts::where('id', $id)
             ->update($validator);
+
         return response()->json([
-            'message' => 'Data successfully updated',
-            'record' => $validator
+            'message' => 'Data successfully updated'
         ], 201);
     }
 

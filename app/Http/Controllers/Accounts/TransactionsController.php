@@ -6,6 +6,7 @@ use App\Models\Experts\Experts;
 use App\Models\Tasks\Tasks_proposals;
 use App\Models\Tasks\Tasks;
 use App\Models\Tasks\Tasks_status_histories;
+use Cartalyst\Stripe\Stripe;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Clients;
@@ -13,6 +14,7 @@ use App\Models\Members\Members;
 use App\Models\Notifications;
 
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Exception;
 use Validator;
 
 class TransactionsController extends Controller
@@ -21,6 +23,8 @@ class TransactionsController extends Controller
 
     public function __construct()
     {
+        $this->middleware('can:accounts/ledger-view')->only(['get_wallet_data']);
+        $this->middleware('can:accounts/wallet-view')->only(['ledger']);
         $this->global = config('app.global');
     }
 
@@ -80,7 +84,8 @@ class TransactionsController extends Controller
             'token' => 'required',
             'card_holder_name' => 'required',
             'card_no' => 'required',
-            'expiration_date' => 'required',
+            'exp_year' => 'required',
+            'exp_month' => 'required',
             'cw_code' => 'required',
             'proposal_id' => 'required'
         ]);
@@ -100,9 +105,10 @@ class TransactionsController extends Controller
         if (!$member_record || empty($token)) {
             return response()->json([
                 'message' => 'invalid token',
-                'status'=>405
+                'status' => 405
             ], 400);
         }
+
 
         $tasks_proposal = Tasks_proposals::find($request->proposal_id);
         if (!$tasks_proposal) {
@@ -142,7 +148,63 @@ class TransactionsController extends Controller
         );
 
         if ($transaction) {
-            DB::commit();
+
+
+            //Stripe
+            $stripe = Stripe::make(env('STRIPE_KEY'));
+            try {
+                $token = $stripe->tokens()->create([
+                    'card' => [
+                        'number' => $request->card_no,
+                        'exp_month' => $request->exp_month,
+                        'exp_year' => $request->exp_year,
+                        'cvc' => $request->cw_code,
+                    ],
+                ]);
+
+                if (!isset($token['id'])) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'The stripe token was not generated correctly!'
+                    ], 404);
+                }
+
+                if (empty($member_record->stripe_id)) {
+                    $customer = $stripe->customers()->create([
+                        'email' => $member_record->email,
+                        'source' => $token['id']
+                    ]);
+                    Members::where('id', $member_record->id)->update(['stripe_id' => $customer['id']]);
+                    $member_record->stripe_id=$customer['id'];
+                }
+
+                $charge = $stripe->charges()->create([
+                    'customer' => $member_record->stripe_id,
+                    'currency' => 'USD',
+                    'amount' => $tasks_proposal->budget,
+                    'description' => 'Payment for wallet add'
+                ]);
+
+                if ($charge['status'] == 'succeeded') {
+                    DB::commit();
+
+                } else {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'message' => 'Error in Transaction!'
+                    ], 404);
+                }
+            } catch (Exception $e) {
+                DB::rollBack();
+
+                return response()->json([
+                    'message' => $e->getMessage()
+                ], 404);
+            }
+            //Stripe
+
+
             return response()->json([
                 'message' => 'Payment successfully added your wallet '
             ], 201);
@@ -180,13 +242,11 @@ class TransactionsController extends Controller
         if (!$member_record || empty($token)) {
             return response()->json([
                 'message' => 'invalid token',
-                'status'=>405
+                'status' => 405
             ], 400);
         }
 
-        $transactions = Transactions::where('member_id', $member_record->id)->select('created_at','description','debit','credit','type');
-
-
+        $transactions = Transactions::where('member_id', $member_record->id)->select('created_at', 'description', 'debit', 'credit', 'type');
 
 
         $records = $transactions->paginate($perPage);
@@ -213,16 +273,14 @@ class TransactionsController extends Controller
         }
 
 
-
         $token = $request->token;
         $member_record = Members::where('token', '=', $token)->first();
         if (!$member_record || empty($token)) {
             return response()->json([
                 'message' => 'invalid token',
-                'status'=>405
+                'status' => 405
             ], 400);
         }
-
 
 
         $topup = Transactions::where(['member_id' => $member_record->id, 'trans_purpose' => 0])->sum('debit');
@@ -231,7 +289,7 @@ class TransactionsController extends Controller
 
 
         return response()->json([
-            'message' =>  ' Success',
+            'message' => ' Success',
             'balance' => $member_record->balance,
             'topup' => $topup,
             'used_purchase' => $used_purchase,

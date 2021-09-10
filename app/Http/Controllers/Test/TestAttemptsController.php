@@ -18,6 +18,13 @@ use Validator;
 
 class TestAttemptsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:test/attempts-view')->only(['get_data','get']);
+        $this->middleware('can:test/attempts-add')->only(['add']);
+        $this->middleware('can:test/attempts-edit')->only(['update']);
+        $this->middleware('can:test/attempts-delete')->only(['delete']);
+    }
 
     public function get_data(Request $request)
     {

@@ -11,6 +11,13 @@ use Validator;
 
 class CountriesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:apps/countries-view')->only(['get_data','get']);
+        $this->middleware('can:apps/countries-add')->only(['add']);
+        $this->middleware('can:apps/countries-edit')->only(['update']);
+        $this->middleware('can:apps/countries-delete')->only(['delete']);
+    }
 
 
     public function get_data(Request $request)
@@ -98,7 +105,7 @@ class CountriesController extends Controller
         Countries::where('id', $id)
             ->update($validator);
         return response()->json([
-            'message' => 'Country successfully updated',
+            'message' => 'Record successfully updated',
             'country' => $validator
         ], 201);
     }
@@ -121,7 +128,7 @@ class CountriesController extends Controller
         $user = Countries::find($request['id']);
         $user->delete();
         return response()->json([
-            'message' => 'Country successfully deleted'
+            'message' => 'Record successfully deleted'
         ], 201);
     }
 
@@ -140,10 +147,10 @@ class CountriesController extends Controller
             return response()->json($data, 400);
         }
 
-        $Country = Countries::find($request['id']);
+        $record = Countries::find($request['id']);
         return response()->json([
             'message' => 'Get User successfully',
-            'country' => $Country
+            'record' => $record
         ], 201);
     }
 }

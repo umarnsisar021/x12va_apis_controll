@@ -12,34 +12,24 @@ use Validator;
 class SkillsController extends Controller
 {
 
+    public function __construct()
+    {
+        $this->middleware('can:apps/skills-view')->only(['get_data','get']);
+        $this->middleware('can:apps/skills-add')->only(['add']);
+        $this->middleware('can:apps/skills-edit')->only(['update']);
+        $this->middleware('can:apps/skills-delete')->only(['delete']);
+    }
 
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);
         $search = request('q');
-        $skill = Skills::orderByDesc('id');
+        $records = Skills::orderByDesc('id');
         if (!empty($search)) {
-            $user->where('name', 'like', '%' . $search . '%');
+            $records->where('name', 'like', '%' . $search . '%');
         }
-
-        if (!empty($role)) {
-            //$user->where('role', $role);
-        }
-
-        $skills = $skill->paginate($perPage);
-//         $userData =$user->map(function($user){
-//             return [
-//                 'id' => $user->id,
-//                 'first_name' => $user->first_name,
-//                 'last_name' => $user->last_name,
-//                 'email' => $user->email,
-//                 'mobile_no' => $user->mobile_no,
-//                 'address' => $user->address,
-//                 'edit_url' => route('users.edit',$user->id),
-//                 'delete_url' => route('users.destroy',$user->id),
-//             ];
-//         });
-        return response()->json($skills);
+        $records = $records->paginate($perPage);
+        return response()->json($records);
     }
 
     public function get_all(Request $request)
@@ -80,7 +70,7 @@ class SkillsController extends Controller
 
     public function add(Request $request) {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|between:2,100|unique:countries',
+            'name' => 'required|string|between:2,100|unique:skills',
             'short_code' => 'required|string|max:100',
         ]);
 
@@ -105,8 +95,8 @@ class SkillsController extends Controller
 
     public function update(Request $request)
     {
-        $rules = Countries::rules($request['id']);
-        $rules['id'] = ['required', 'exists:countries,id'];
+        $rules = Skills::rules($request['id']);
+        $rules['id'] = ['required', 'exists:skills,id'];
         if (empty($request['password'])) {
             unset($request['password']);
             unset($rules['password']);
@@ -129,11 +119,10 @@ class SkillsController extends Controller
         $validator= $validator->validated();
         $id = $validator['id'];
         unset($validator['id']);
-        Countries::where('id', $id)
+        Skills::where('id', $id)
             ->update($validator);
         return response()->json([
-            'message' => 'Country successfully updated',
-            'country' => $validator
+            'message' => 'Record successfully updated'
         ], 201);
     }
 
@@ -152,10 +141,10 @@ class SkillsController extends Controller
             return response()->json($data, 400);
         }
 
-        $user = Countries::find($request['id']);
+        $user = Skills::find($request['id']);
         $user->delete();
         return response()->json([
-            'message' => 'Country successfully deleted'
+            'message' => 'Record successfully deleted'
         ], 201);
     }
 

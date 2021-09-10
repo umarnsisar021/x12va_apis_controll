@@ -1,14 +1,17 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Models\Settings\Roles\Modules;
 use App\Models\Settings\Roles\Modules_permissions;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\JWTAuth;
+
 use Validator;
+use Illuminate\Support\Facades\Gate;
 
 
 class AuthController extends Controller
@@ -20,7 +23,7 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['register','authenticate']]);
     }
 
     /**
@@ -28,21 +31,18 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request)
+
+
+    public function authenticate(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        $credentials = $request->only('email', 'password');
+        try {
+            if (! $token = \JWTAuth::attempt($credentials)) {
+                return response()->json(['error' => 'invalid_credentials'], 400);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'could_not_create_token'], 500);
         }
-
-        if (!$token = auth()->attempt($validator->validated())) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
         return $this->createNewToken($token);
     }
 
@@ -127,10 +127,9 @@ class AuthController extends Controller
             ->leftjoin('roles_modules_actions', 'roles_modules_actions.id', '=', 'roles_modules_permissions.action_id')
             ->leftjoin('roles_modules', 'roles_modules.id', '=', 'roles_modules_permissions.module_id')->get()->toarray();
 
-
         $userData['navigation'] = $this->navigation();
         $userData['ability'] = $access_rights;
-
+//        Auth::user()->setAttribute('ability',$access_rights);
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
@@ -182,8 +181,6 @@ class AuthController extends Controller
             }
             $navigation[] = $nav;
         }
-
         return $navigation;
-
     }
 }

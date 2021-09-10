@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Settings\Roles\Modules_permissions;
+use App\Models\Settings\Roles\Roles;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -73,5 +75,17 @@ class User extends Authenticatable implements JWTSubject
             'password' => 'required|string|confirmed|min:6',
             'role_id' => 'required'
         ];
+    }
+
+
+    public function setRoleAttribute($key,$value)
+    {
+        $this->attributes[$key] = strtolower($value);
+    }
+
+
+    public function role()
+    {
+        return $this->hasOne(Roles::class,'id','role_id');
     }
 }

@@ -4,10 +4,10 @@ use App\Http\Controllers\Accounts\TransactionsController;
 use App\Http\Controllers\Notifications\NotificationsController;
 use App\Http\Controllers\Settings\RolesController;
 use App\Http\Controllers\Settings\SystemSettingsController;
+use App\Http\Controllers\Settings\UsersController;
 use App\Http\Controllers\Tasks\TasksController;
 use App\Http\Controllers\Test\TestAttemptsController;
 use App\Http\Controllers\Test\TestTemplatesController;
-use App\Http\Controllers\UsersController;
 use App\Http\Controllers\App\CountriesController;
 use App\Http\Controllers\App\SkillsController;
 use App\Http\Controllers\Experts\ExpertsController;
@@ -17,6 +17,7 @@ use App\Http\Controllers\Pages\HomePageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,119 +37,125 @@ Route::group([
     Route::group([
         'prefix' => 'auth'
     ], function ($router) {
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/login', [AuthController::class, 'authenticate']);
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/refresh', [AuthController::class, 'refresh']);
         Route::get('/user-profile', [AuthController::class, 'userProfile']);
     });
 
-
-    //Users
-    Route::post('/users/get_data', [UsersController::class, 'get_data']);
-    Route::post('/users/add', [UsersController::class, 'add']);
-    Route::post('/users/update', [UsersController::class, 'update']);
-    Route::post('/users/delete', [UsersController::class, 'delete']);
-    Route::post('/users/get', [UsersController::class, 'get']);
-    Route::post('/users/get_roles', [UsersController::class, 'get_roles']);
+    Route::group(['middleware' => ['jwt.verify']], function () {
 
 
-    //Skill
-    Route::post('/skills/get_data', [SkillsController::class, 'get_data']);
-    Route::post('/skills/add', [SkillsController::class, 'add']);
-    Route::post('/skills/update', [SkillsController::class, 'update']);
-    Route::post('/skills/delete', [SkillsController::class, 'delete']);
-    Route::post('/skills/get', [SkillsController::class, 'get']);
-    Route::post('/skills/get_all', [SkillsController::class, 'get_all']);
+        //Skill
+        Route::post('/skills/get_data', [SkillsController::class, 'get_data']);
+        Route::post('/skills/add', [SkillsController::class, 'add']);
+        Route::post('/skills/update', [SkillsController::class, 'update']);
+        Route::post('/skills/delete', [SkillsController::class, 'delete']);
+        Route::post('/skills/get', [SkillsController::class, 'get']);
+        Route::post('/skills/get_all', [SkillsController::class, 'get_all']);
 
 
-    //Countries
-    Route::post('/countries/get_data', [CountriesController::class, 'get_data']);
-    Route::post('/countries/add', [CountriesController::class, 'add']);
-    Route::post('/countries/update', [CountriesController::class, 'update']);
-    Route::post('/countries/delete', [CountriesController::class, 'delete']);
-    Route::post('/countries/get', [CountriesController::class, 'get']);
+        //Countries
+        Route::post('/countries/get_data', [CountriesController::class, 'get_data']);
+        Route::post('/countries/add', [CountriesController::class, 'add']);
+        Route::post('/countries/update', [CountriesController::class, 'update']);
+        Route::post('/countries/delete', [CountriesController::class, 'delete']);
+        Route::post('/countries/get', [CountriesController::class, 'get']);
 
 
-    //Experts
-    Route::post('/experts/get_data', [ExpertsController::class, 'get_data']);
-    Route::post('/experts/add', [ExpertsController::class, 'add']);
-    Route::post('/experts/update', [ExpertsController::class, 'update']);
-    Route::post('/experts/status_change', [ExpertsController::class, 'status_change']);
+        //Experts
+        Route::post('/experts/get_data', [ExpertsController::class, 'get_data']);
+        Route::post('/experts/add', [ExpertsController::class, 'add']);
+        Route::post('/experts/update', [ExpertsController::class, 'update']);
+        Route::post('/experts/status_change', [ExpertsController::class, 'status_change']);
 
-    Route::post('/experts/delete', [ExpertsController::class, 'delete']);
-    Route::post('/experts/get', [ExpertsController::class, 'get']);
-    Route::post('/experts/fileupload', [ExpertsController::class, 'uploadfile_to_s3']);
-    Route::post('/experts/updateEducation', [ExpertsController::class, 'updateEducation']);
-    Route::post('/experts/add_expert_education', [ExpertsController::class, 'addExpertEducation']);
-    Route::post('/experts/delete_expert_education', [ExpertsController::class, 'deleteExpertEducation']);
-    Route::post('/experts/add_expert_tool', [ExpertsController::class, 'addExpertTool']);
-    Route::post('/experts/delete_expert_skill', [ExpertsController::class, 'deleteExpertSkill']);
-    Route::post('/experts/delete_expert_tool', [ExpertsController::class, 'deleteExpertTool']);
-    Route::post('/experts/add_expert_skills', [ExpertsController::class, 'addExpertSkills']);
-    Route::post('/experts/change_expert_password', [ExpertsController::class, 'changeExpertPassword']);
-
-
-    //Clients
-    Route::post('/clients/get_data', [ClientsController::class, 'get_data']);
-    Route::post('/clients/add', [ClientsController::class, 'add']);
-    Route::post('/clients/update', [ClientsController::class, 'update']);
-    Route::post('/clients/delete', [ClientsController::class, 'delete']);
-    Route::post('/clients/get', [ClientsController::class, 'get']);
-    Route::post('/clients/fileupload', [ClientsController::class, 'uploadfile_to_s3']);
-    Route::post('/clients/change_password', [ClientsController::class, 'changePassword']);
-    Route::post('/clients/get_member_list_data', [ClientsController::class, 'get_member_list_data']);
+        Route::post('/experts/delete', [ExpertsController::class, 'delete']);
+        Route::post('/experts/get', [ExpertsController::class, 'get']);
+        Route::post('/experts/fileupload', [ExpertsController::class, 'uploadfile_to_s3']);
+        Route::post('/experts/updateEducation', [ExpertsController::class, 'updateEducation']);
+        Route::post('/experts/add_expert_education', [ExpertsController::class, 'addExpertEducation']);
+        Route::post('/experts/delete_expert_education', [ExpertsController::class, 'deleteExpertEducation']);
+        Route::post('/experts/add_expert_tool', [ExpertsController::class, 'addExpertTool']);
+        Route::post('/experts/delete_expert_skill', [ExpertsController::class, 'deleteExpertSkill']);
+        Route::post('/experts/delete_expert_tool', [ExpertsController::class, 'deleteExpertTool']);
+        Route::post('/experts/add_expert_skills', [ExpertsController::class, 'addExpertSkills']);
+        Route::post('/experts/change_expert_password', [ExpertsController::class, 'changeExpertPassword']);
 
 
-    //Task
-    Route::post('/tasks/get_data', [TasksController::class, 'get_data']);
-    Route::post('/tasks/add', [TasksController::class, 'add']);
-    Route::post('/tasks/update', [TasksController::class, 'update']);
-    Route::post('/tasks/delete', [TasksController::class, 'delete']);
-    Route::post('/tasks/get', [TasksController::class, 'get']);
+        //Clients
+        Route::post('/clients/get_data', [ClientsController::class, 'get_data']);
+        Route::post('/clients/add', [ClientsController::class, 'add']);
+        Route::post('/clients/update', [ClientsController::class, 'update']);
+        Route::post('/clients/delete', [ClientsController::class, 'delete']);
+        Route::post('/clients/get', [ClientsController::class, 'get']);
+        Route::post('/clients/fileupload', [ClientsController::class, 'uploadfile_to_s3']);
+        Route::post('/clients/change_password', [ClientsController::class, 'changePassword']);
+        Route::post('/clients/get_member_list_data', [ClientsController::class, 'get_member_list_data']);
 
 
-    //Pages
-    Route::post('/pages/get_fields', [PagesController::class, 'get_fields']);
-    Route::post('/pages/home/update_banner', [HomePageController::class, 'update_banner']);
-    Route::post('/pages/home/delete_banner', [HomePageController::class, 'delete_banner']);
-    Route::post('/pages/home/add_marketplace', [HomePageController::class, 'add_marketplace']);
+        //Task
+        Route::post('/tasks/get_data', [TasksController::class, 'get_data']);
+        Route::post('/tasks/add', [TasksController::class, 'add']);
+        Route::post('/tasks/update', [TasksController::class, 'update']);
+        Route::post('/tasks/delete', [TasksController::class, 'delete']);
+        Route::post('/tasks/get', [TasksController::class, 'get']);
 
 
-    //Test
-    Route::post('/test/templates/get_data', [TestTemplatesController::class, 'get_data']);
-    Route::post('/test/templates/add', [TestTemplatesController::class, 'add']);
-    Route::post('/test/templates/update', [TestTemplatesController::class, 'update']);
-    Route::post('/test/templates/delete', [TestTemplatesController::class, 'delete']);
-    Route::post('/test/templates/get', [TestTemplatesController::class, 'get']);
-
-    //Test Attempts
-    Route::post('/test/attempts/get_data', [TestAttemptsController::class, 'get_data']);
-    Route::post('/test/attempts/status_change', [TestAttemptsController::class, 'status_change']);
-    Route::post('/test/attempts/get', [TestAttemptsController::class, 'get']);
-    Route::post('/test/attempts/delete', [TestAttemptsController::class, 'delete']);
+        //Pages
+        Route::post('/pages/get_fields', [PagesController::class, 'get_fields']);
+        Route::post('/pages/home/update_banner', [HomePageController::class, 'update_banner']);
+        Route::post('/pages/home/delete_banner', [HomePageController::class, 'delete_banner']);
+        Route::post('/pages/home/add_marketplace', [HomePageController::class, 'add_marketplace']);
 
 
-    //Accounts
-    Route::post('/accounts/transactions/ledger', [TransactionsController::class, 'ledger']);
-    Route::post('/accounts/transactions/get_wallet_data', [TransactionsController::class, 'get_wallet_data']);
+        //Test
+        Route::post('/test/templates/get_data', [TestTemplatesController::class, 'get_data']);
+        Route::post('/test/templates/add', [TestTemplatesController::class, 'add']);
+        Route::post('/test/templates/update', [TestTemplatesController::class, 'update']);
+        Route::post('/test/templates/delete', [TestTemplatesController::class, 'delete']);
+        Route::post('/test/templates/get', [TestTemplatesController::class, 'get']);
+
+        //Test Attempts
+        Route::post('/test/attempts/get_data', [TestAttemptsController::class, 'get_data']);
+        Route::post('/test/attempts/status_change', [TestAttemptsController::class, 'status_change']);
+        Route::post('/test/attempts/get', [TestAttemptsController::class, 'get']);
+        Route::post('/test/attempts/delete', [TestAttemptsController::class, 'delete']);
 
 
-
-    //System Settings
-    Route::post('/settings/system_settings/get', [SystemSettingsController::class, 'get']);
-    Route::post('/settings/system_settings/update', [SystemSettingsController::class, 'update']);
-
-
-    //Roles
-    Route::post('/settings/roles/get_data', [RolesController::class, 'get_data']);
-    Route::post('/settings/roles/add', [RolesController::class, 'add']);
-    Route::post('/settings/roles/update', [RolesController::class, 'update']);
-    Route::post('/settings/roles/delete', [RolesController::class, 'delete']);
-    Route::post('/settings/roles/get', [RolesController::class, 'get']);
-    Route::post('/settings/roles/get_modules', [RolesController::class, 'get_modules']);
+        //Accounts
+        Route::post('/accounts/transactions/ledger', [TransactionsController::class, 'ledger']);
+        Route::post('/accounts/transactions/get_wallet_data', [TransactionsController::class, 'get_wallet_data']);
 
 
+        Route::group([
+            'prefix' => 'settings'
+        ],
+            function ($router) {
+                //System Settings
+                Route::post('/system_settings/get', [SystemSettingsController::class, 'get']);
+                Route::post('/system_settings/update', [SystemSettingsController::class, 'update']);
+
+
+                //Roles
+                Route::post('/roles/get_data', [RolesController::class, 'get_data']);
+                Route::post('/roles/add', [RolesController::class, 'add']);
+                Route::post('/roles/update', [RolesController::class, 'update']);
+                Route::post('/roles/delete', [RolesController::class, 'delete']);
+                Route::post('/roles/get', [RolesController::class, 'get']);
+                Route::post('/roles/get_modules', [RolesController::class, 'get_modules']);
+
+
+                //Users
+                Route::post('/users/get_data', [UsersController::class, 'get_data']);
+                Route::post('/users/add', [UsersController::class, 'add']);
+                Route::post('/users/update', [UsersController::class, 'update']);
+                Route::post('/users/delete', [UsersController::class, 'delete']);
+                Route::post('/users/get', [UsersController::class, 'get']);
+                Route::post('/users/get_roles', [UsersController::class, 'get_roles']);
+
+            });
+    });
 
     Route::group([
         'prefix' => 'web'
@@ -206,11 +213,12 @@ Route::group([
             Route::post('/experts/update_task', [TasksController::class, 'api_update_task']);
 
 
-
-
             //Task
             Route::post('/tasks/get_task_by_id', [TasksController::class, 'api_get_task_by_id']);
 
+            Route::post('/tasks/get_task_detail', [TasksController::class, 'api_get_task_detail']);
+
+            Route::post('/tasks/task_update_comment_add', [TasksController::class, 'api_task_update_comment_add']);
 
 
             //Test
@@ -233,14 +241,20 @@ Route::get('/clear', function () {
 //    return "Cleared!";
 
 //    Artisan::call('storage:link');
-    Artisan::call('cache:clear');
 //
 //    Artisan::call('config:cache');
 //    Artisan::call('view:clear');
-    Artisan::call('route:clear');
-    Artisan::call('route:cache');
+//    Artisan::call('route:clear');
+//    Artisan::call('route:cache');
 //    Artisan::call('config:clear');
 //    Artisan::call('config:cache');
+//    Artisan::call('cache:clear');
+
     Artisan::call('optimize');
     return "Cleared!";
 });
+Route::get('/clear-cache', function () {
+    $exitCode = Artisan::call('cache:clear');
+    print_r($exitCode);die;
+});
+

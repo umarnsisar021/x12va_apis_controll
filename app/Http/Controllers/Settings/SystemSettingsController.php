@@ -7,7 +7,11 @@ use Illuminate\Http\Request;
 
 class SystemSettingsController extends Controller
 {
-
+    public function __construct()
+    {
+        $this->middleware('can:settings/system_settings-view')->only(['get']);
+        $this->middleware('can:settings/system_settings-edit')->only(['update']);
+    }
 
     public function get()
     {

@@ -8,6 +8,7 @@ use App\Models\Tasks\Tasks;
 use App\Models\Tasks\Tasks_remainders;
 use App\Models\Tasks\Tasks_status_histories;
 use App\Models\Tasks\Tasks_updates;
+use App\Models\Tasks\Tasks_updates_comments;
 use DateTime;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -25,7 +26,13 @@ class TasksController extends Controller
     public function __construct()
     {
         $this->global = config('app.global');
+        $this->middleware('can:tasks/tasks-view')->only(['get_data','get']);
+        $this->middleware('can:tasks/tasks-add')->only(['add']);
+        $this->middleware('can:tasks/tasks-edit')->only(['update']);
+        $this->middleware('can:tasks/tasks-delete')->only(['delete']);
     }
+
+
 
 
     public function get_data(Request $request)
@@ -452,7 +459,7 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['tasks_proposals.member_id' => $member_record->id])
-            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget','tasks_proposals.problem_statement','tasks_proposals.id as proposal_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -865,7 +872,7 @@ class TasksController extends Controller
             ], 400);
         }
 
-        if($task->expert_id!=$member_record->id){
+        if ($task->expert_id != $member_record->id) {
             return response()->json([
                 'message' => 'You have not permission to update this task'
             ], 404);
@@ -915,5 +922,205 @@ class TasksController extends Controller
 
 
     }
+
+
+    public function api_get_task_detail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'task_id' => 'required'
+        ]);
+
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->select('members.*', 'experts.first_name', 'experts.last_name')
+            ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token',
+                'status' => 405,
+            ], 400);
+        }
+        $task = Tasks::where('tasks.id', '=', $request->task_id)
+            ->select('tasks.*', 'skills.name as skill_name')
+            ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->first();
+
+        if (!$task) {
+            return response()->json([
+                'message' => 'Task not found'
+            ], 400);
+        }
+
+        if ($task->expert_id != $member_record->id && $task->client_id != $member_record->id) {
+            return response()->json([
+                'message' => 'You have not permission to view this task'
+            ], 404);
+        }
+
+        $task_status = config('common_list.task_status');
+        $task_detail = [
+            'task_id' => $task->id,
+            'days' => $task->days,
+            'status' => $task_status[$task->status],
+            'description' => $task->description,
+            'document' => $task->document,
+            'skill_name' => $task->skill_name,
+            'created_at'=>$task->created_at
+        ];
+
+        $expert_detail = [
+            'name' => $task->experts->first_name . ' ' . $task->experts->last_name,
+            'email' => $task->experts->email,
+            'mobile_number' => $task->experts->mobile_number,
+            'avatar' => $task->experts->avatar
+        ];
+
+
+        $client_detail = [
+            'name' => $task->clients->first_name . ' ' . $task->clients->last_name,
+            'email' => $task->clients->email,
+            'mobile_number' => $task->clients->mobile_number,
+            'avatar' => $task->clients->avatar
+        ];
+
+
+        $accepted_proposal = Tasks_proposals::where(['task_id' => $task->id, 'member_id' => $task->expert_id])
+            ->select('subject', 'problem_statement', 'budget', 'description','created_at')->first();
+
+        $task_updates = Tasks_updates::where(['task_id' => $task->id])
+            ->select('id','note', 'document', 'created_at')
+            ->with('comments:id,comment,member_id,update_id')
+//            ->with(['comments' => function($query) {
+//                $query->select(['id', 'comment','member_id']);
+//            }])
+            ->first();
+        return response()->json([
+            'message' => 'successfully Update',
+            'task_detail' => $task_detail,
+            'expert' => $expert_detail,
+            'client' => $client_detail,
+            'proposal' => $accepted_proposal,
+            'updates' => $task_updates
+        ], 201);
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public function api_task_update_comment_add(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'update_id' => 'required',
+            'comment' => 'required'
+        ]);
+
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->select('members.*', 'experts.first_name', 'experts.last_name')
+            ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token',
+                'status' => 405,
+            ], 400);
+        }
+
+        $tasks_update=Tasks_updates::where('id',$request->update_id)->first();
+
+        if (!$tasks_update) {
+            return response()->json([
+                'message' => 'Update not found'
+            ], 400);
+        }
+
+        $task = Tasks::where('tasks.id', '=', $tasks_update->task_id)->first();
+
+        if (!$task) {
+            return response()->json([
+                'message' => 'Task not found'
+            ], 400);
+        }
+
+        if ($task->expert_id != $member_record->id && $task->client_id != $member_record->id) {
+            return response()->json([
+                'message' => 'You have not permission to view this task'
+            ], 404);
+        }
+
+
+        DB::beginTransaction();
+        $comment = Tasks_updates_comments::create(
+            [
+                'member_id' => $member_record->id,
+                'update_id' => $request->update_id,
+                'comment' => $request->comment,
+            ]
+        );
+
+        if ($comment) {
+            $notification = Notifications::create(
+                [
+                    'primary_id' => $comment->id,
+                    'title' => "Proposal Received From " . $member_record->first_name . " " . $member_record->last_name,
+                    'message' => $comment->comment,
+                    'type' => 9,
+                    'member_id' => $task->expert_id,
+                    'from_member_id' => $member_record->id,
+                ]
+            );
+
+            DB::commit();
+            return response()->json([
+                'message' => 'successfully Added',
+                'comment_id' => $comment->id
+            ], 201);
+
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+
+    }
+
 
 }

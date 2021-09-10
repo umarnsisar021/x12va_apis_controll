@@ -15,6 +15,14 @@ use Validator;
 class ClientsController extends Controller
 {
 
+    public function __construct()
+    {
+        $this->middleware('can:clients/clients-view')->only(['get_data','get','get_member_list_data']);
+        $this->middleware('can:clients/clients-add')->only(['add']);
+        $this->middleware('can:clients/clients-edit')->only(['update','changePassword']);
+        $this->middleware('can:clients/clients-delete')->only(['delete']);
+    }
+
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);
@@ -58,10 +66,14 @@ class ClientsController extends Controller
         }
         DB::beginTransaction();
 
-        $member = Members::create(array_merge(
-            $validator->validated(),
-            ['password' => bcrypt($request->password), 'is_buyer' => 1]
-        ));
+        $member = Members::create(
+            [
+                'username'=>$request->username,
+                'password' => bcrypt($request->password),
+                'is_buyer' => 1,
+                'email'=>$request->email
+            ]
+        );
 
 
         $avatar_name = $request->username . '-' . $member->id;
@@ -71,8 +83,11 @@ class ClientsController extends Controller
         if ($request->avatar) {
             $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
         }
+        $validator_data=$validator->validated();
+        unset($validator_data['username']);
+        unset($validator_data['password']);
         $clients = Clients::create(array_merge(
-            $validator->validated(),
+            $validator_data,
             [
                 'member_id' => $member->id,
                 'avatar' => $avatar,
@@ -117,31 +132,35 @@ class ClientsController extends Controller
 
     public function update(Request $request)
     {
-        $rules = Clients::rules($request['id']);
+        $rules = [
+            'first_name' => 'required|string|between:2,100',
+            'last_name' => 'required|string|between:2,100',
+        ];
         $rules['id'] = ['required', 'exists:clients,id'];
-        if (empty($request['password'])) {
-            unset($request['password']);
-            unset($rules['password']);
-        }
-        if (empty($request['status'])) {
-            unset($request['status']);
-            unset($rules['status']);
-        }
+
 
         $validator = Validator::make($request->all(), $rules);
 
+        if($validator->fails()){
+            $validators=$validator->errors()->toArray();
+            $data=[
+                'validations'=>$validators,
+                'message'=>$validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
 
         $validator = $validator->validated();
+
         $id = $validator['id'];
         unset($validator['id']);
         Clients::where('id', $id)
             ->update($validator);
+
         return response()->json([
-            'message' => 'Record successfully updated',
-            'record' => $validator
+            'message' => 'Data successfully updated'
         ], 201);
     }
-
     public function get(Request $request)
     {
         $validator = Validator::make($request->all(), [

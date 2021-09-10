@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Settings\RolesController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,6 +15,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+Route::get('/home', function () {
+
+        Artisan::call('config:cache');
+    Artisan::call('view:clear');
+    Artisan::call('route:clear');
+    Artisan::call('route:cache');
+    Artisan::call('config:clear');
+    Artisan::call('config:cache');
+    Artisan::call('cache:clear');
+    Artisan::call('optimize');
+    print_r(2);die;;
     return view('welcome');
 });
+
+
+Route::get('/roles/get_data', [RolesController::class, 'get_data']);

@@ -12,7 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class Members extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable ;
 
     /**
      * The attributes that are mass assignable.
@@ -109,4 +109,6 @@ class Members extends Authenticatable implements JWTSubject
             return $trans->credit;
         });
     }
+
+
 }

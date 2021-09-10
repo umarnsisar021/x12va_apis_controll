@@ -18,6 +18,14 @@ use Validator;
 class TestTemplatesController extends Controller
 {
 
+    public function __construct()
+    {
+        $this->middleware('can:test/templates-view')->only(['get_data','get']);
+        $this->middleware('can:test/templates-add')->only(['add']);
+        $this->middleware('can:test/templates-edit')->only(['update']);
+        $this->middleware('can:test/templates-delete')->only(['delete']);
+    }
+    
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);

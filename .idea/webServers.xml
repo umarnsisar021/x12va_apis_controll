@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="d1fbf240-3ebe-48b4-90d0-1fb0fa4508bc" name="x12va" url="http://ftp.salalkhan.com">
-        <fileTransfer host="ftp.salalkhan.com" port="21" password="dfe0df9bdfe3df9edfc6dffadfe3dff0df80df87dfe9dfd3" username="x12va@salalkhan.com">
+        <fileTransfer host="ftp.salalkhan.com" port="21" password="dfe1df8cdf99df8bdf87dfe1dfe5df81dfefdfefdfdcdfee" username="x12va@salalkhan.com">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" />
           </advancedOptions>

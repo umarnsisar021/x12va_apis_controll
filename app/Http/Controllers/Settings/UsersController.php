@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Settings;
 
 use App\Models\Settings\Roles\Roles;
 use Illuminate\Http\Request;
-
+use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Validator;
 
@@ -19,30 +18,36 @@ class UsersController extends Controller
     public function __construct()
     {
         $this->global = config('app.global');
+        $this->middleware('can:settings/user-view')->only(['get_data', 'get']);
+        $this->middleware('can:settings/user-add')->only(['add']);
+        $this->middleware('can:settings/user-edit')->only(['update']);
+        $this->middleware('can:settings/user-delete')->only(['delete']);
     }
 
     public function get_data(Request $request)
     {
         $perPage = request('perPage', 10);
         $search = request('q');
-        $role = request('role');
 
-        $user = User::orderByDesc('id');
+        $records = User::orderByDesc('users.id');
         if (!empty($search)) {
-            $user->where('name', 'like', '%' . $search . '%');
+            $records->where('users.name', 'like', '%' . $search . '%');
         }
 
-        if (!empty($role)) {
-            $user->where('role_id', $role);
-        }
+        $records->leftjoin('roles', 'roles.id', '=', 'users.role_id');
+        $records->select('users.*', 'roles.name as role_name');
 
-        $users = $user->paginate($perPage);
+        if (!empty(request('role_id'))) {
+            $records->where('users.role_id', request('role_id'));
+        }
+        $users = $records->paginate($perPage);
         return response()->json($users);
     }
 
 
     public function add(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
@@ -75,7 +80,7 @@ class UsersController extends Controller
 
 
         return response()->json([
-            'message' => 'User successfully created',
+            'message' => 'Record successfully created',
             'user' => $user
         ], 201);
     }
@@ -119,7 +124,7 @@ class UsersController extends Controller
         User::where('id', $id)
             ->update($validator);
         return response()->json([
-            'message' => 'User successfully updated',
+            'message' => 'Record successfully updated',
             'user' => $validator
         ], 201);
     }
@@ -142,7 +147,7 @@ class UsersController extends Controller
         $user = User::find($request['id']);
         $user->delete();
         return response()->json([
-            'message' => 'User successfully deleted'
+            'message' => 'Record successfully deleted'
         ], 201);
     }
 
@@ -163,7 +168,7 @@ class UsersController extends Controller
 
         $user = User::find($request['id']);
         return response()->json([
-            'message' => 'Get User successfully',
+            'message' => 'Get Record successfully',
             'user' => $user
         ], 201);
     }
@@ -193,16 +198,14 @@ class UsersController extends Controller
     }
 
 
-
     public function get_roles(Request $request)
     {
-        $records = Roles::where('status',1)->get();
+        $records = Roles::where('status', 1)->get();
         return response()->json([
             'message' => 'Get Records successfully',
             'records' => $records
         ], 201);
     }
-
 
 
 }
