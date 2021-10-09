@@ -30,4 +30,19 @@ class System_settings extends Model
     ];
 
 
+    public static function getSystemSetting($key){
+        $global_settings= self::where('key_name',$key)->select('value')->first();
+        if(isset($global_settings->value)){
+            return $global_settings->value;
+        }
+        return '';
+    }
+
+    public static function setSystemSetting($key,$value){
+        $global_settings= self::where('key_name',$key)->find(['value'=>$value]);
+        if($global_settings){
+            return true;
+        }
+        return false;
+    }
 }

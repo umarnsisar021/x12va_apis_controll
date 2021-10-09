@@ -65,7 +65,7 @@ class Tasks extends Model
 
 
     public function clients(){
-        return $this->hasOne(Clients::class,'member_id','expert_id');
+        return $this->hasOne(Clients::class,'member_id','client_id');
     }
 
     public function getClientAttribute()

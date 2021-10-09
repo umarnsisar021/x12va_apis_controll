@@ -13,6 +13,7 @@ class CountriesController extends Controller
 {
     public function __construct()
     {
+        parent::__construct();
         $this->middleware('can:apps/countries-view')->only(['get_data','get']);
         $this->middleware('can:apps/countries-add')->only(['add']);
         $this->middleware('can:apps/countries-edit')->only(['update']);

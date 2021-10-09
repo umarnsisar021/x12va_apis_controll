@@ -13,11 +13,10 @@ use Validator;
 class UsersController extends Controller
 {
 
-    protected $global;
 
     public function __construct()
     {
-        $this->global = config('app.global');
+        parent::__construct();
         $this->middleware('can:settings/user-view')->only(['get_data', 'get']);
         $this->middleware('can:settings/user-add')->only(['add']);
         $this->middleware('can:settings/user-edit')->only(['update']);

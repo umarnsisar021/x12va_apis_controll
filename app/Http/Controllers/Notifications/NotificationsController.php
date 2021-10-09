@@ -15,6 +15,10 @@ use Validator;
 class NotificationsController extends Controller
 {
 
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
     public function api_get_notifications(Request $request)
     {

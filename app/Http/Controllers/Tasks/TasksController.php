@@ -3,10 +3,13 @@ namespace App\Http\Controllers\Tasks;
 
 use App\Models\Accounts\Transactions;
 use App\Models\Experts\Experts;
+use App\Models\Settings\System_settings;
 use App\Models\Tasks\Tasks_proposals;
 use App\Models\Tasks\Tasks;
+use App\Models\Tasks\Tasks_rating;
 use App\Models\Tasks\Tasks_remainders;
 use App\Models\Tasks\Tasks_status_histories;
+use App\Models\Tasks\Tasks_transaction_release;
 use App\Models\Tasks\Tasks_updates;
 use App\Models\Tasks\Tasks_updates_comments;
 use DateTime;
@@ -21,18 +24,16 @@ use Validator;
 
 class TasksController extends Controller
 {
-    protected $global;
+
 
     public function __construct()
     {
-        $this->global = config('app.global');
-        $this->middleware('can:tasks/tasks-view')->only(['get_data','get']);
+        parent::__construct();
+        $this->middleware('can:tasks/tasks-view')->only(['get_data', 'get']);
         $this->middleware('can:tasks/tasks-add')->only(['add']);
         $this->middleware('can:tasks/tasks-edit')->only(['update']);
         $this->middleware('can:tasks/tasks-delete')->only(['delete']);
     }
-
-
 
 
     public function get_data(Request $request)
@@ -292,7 +293,7 @@ class TasksController extends Controller
             ], 404);
         }
 
-        if ($tasks_proposal->budget > $member_record->balance) {
+        if ($tasks_proposal->total_payable > $member_record->balance) {
             return response()->json([
                 'message' => 'Your Wallet Balance Less then Proposal Budget',
                 'status' => 402
@@ -335,7 +336,7 @@ class TasksController extends Controller
                     'primary_table' => (new Tasks)->getTable(),
                     'type' => 1,
                     'status' => 1,
-                    'credit' => $tasks_proposal->budget,
+                    'credit' => $tasks_proposal->total_payable,
                     'member_id' => $member_record->id,
                     'description' => 'Assign Task, Task #' . $task->id,
                     'trans_purpose' => 1
@@ -409,7 +410,7 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['tasks.expert_id' => $member_record->id, 'tasks.status' => $request->status])
-            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget','tasks_proposals.total_payable')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -459,7 +460,7 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['tasks_proposals.member_id' => $member_record->id])
-            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget','tasks_proposals.problem_statement','tasks_proposals.id as proposal_id')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget','tasks_proposals.total_payable', 'tasks_proposals.problem_statement', 'tasks_proposals.id as proposal_id')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -547,8 +548,8 @@ class TasksController extends Controller
             return response()->json($data, 400);
         }
 
-        // $perPage = request('perPage', 10);
-        // $search = request('q');
+         $perPage = request('perPage', 10);
+         $search = request('q');
 
         $token = $request->token;
         $member_record = Members::where('token', '=', $token)->first();
@@ -559,7 +560,7 @@ class TasksController extends Controller
         }
 
         $records = Tasks::where(['tasks.client_id' => $member_record->id, 'tasks.status' => $request->status])
-            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget')
+            ->select('tasks.id', 'tasks.description as task_description', 'tasks.days', 'skills.name as skill_name', 'task_assign.created_at as assign_date', 'task_complete.created_at as complete_date', 'tasks_proposals.budget','tasks_proposals.total_payable')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->groupBy('id')
             ->leftJoin('tasks_status_histories as task_assign', function ($join) {
                 $join->on('task_assign.task_id', '=', 'tasks.id');
@@ -570,8 +571,8 @@ class TasksController extends Controller
                 $join->on('task_complete.status', '=', DB::raw('3'));
             })
             ->leftjoin('tasks_proposals', 'tasks_proposals.task_id', '=', 'tasks.id');
-        // $records = $records->paginate($perPage);
-        $records = $records->get();
+         $records = $records->paginate($perPage);
+//        $records = $records->get();
 
         return response()->json([
             'message' => count($records) . ' Orders Found ',
@@ -607,7 +608,7 @@ class TasksController extends Controller
             ], 400);
         }
         $records = Tasks_proposals::where('tasks.client_id', $member_record->id)
-            ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.member_id as expert_id', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name'
+            ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.member_id as expert_id', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget','tasks_proposals.total_payable', 'tasks.days', 'skills.name as skill_name'
                 , 'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name', 'experts.avatar as expert_avatar')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
@@ -696,7 +697,7 @@ class TasksController extends Controller
             ], 400);
         }
         $record = Tasks_proposals::where('tasks.client_id', $member_record->id)
-            ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
+            ->select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget','tasks_proposals.total_payable', 'tasks.days', 'skills.name as skill_name',
                 'tasks_proposals.member_id as expert_id', 'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name', 'experts.avatar as expert_avatar')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
@@ -733,7 +734,7 @@ class TasksController extends Controller
                 'message' => 'invalid token', 'status' => 405
             ], 400);
         }
-        $record = Tasks_proposals::select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget', 'tasks.days', 'skills.name as skill_name',
+        $record = Tasks_proposals::select('tasks_proposals.id', 'tasks_proposals.task_id', 'tasks_proposals.subject', 'tasks_proposals.problem_statement', 'tasks_proposals.description', 'tasks_proposals.budget','tasks_proposals.total_payable', 'tasks.days', 'skills.name as skill_name',
             'tasks_proposals.member_id as expert_id', 'experts.first_name as expert_first_name', 'experts.last_name as expert_last_name')
             ->leftjoin('tasks', 'tasks.id', '=', 'tasks_proposals.task_id')
             ->leftjoin('experts', 'experts.member_id', '=', 'tasks_proposals.member_id')
@@ -789,6 +790,20 @@ class TasksController extends Controller
             ], 400);
         }
 
+        $budget=($request->budget)?$request->budget:0;
+        $task_commission_from_expert = System_settings::getSystemSetting('task_commission_from_expert');
+        $verifier_commission_from_expert = System_settings::getSystemSetting('verifier_commission_from_expert');
+        $task_commission_from_client = System_settings::getSystemSetting('task_commission_from_client');
+        $verifier_commission_from_client = System_settings::getSystemSetting('verifier_commission_from_client');
+        if (true) {//percentage of budget amount
+            $task_commission_from_expert = $task_commission_from_expert * $budget / 100;
+            $verifier_commission_from_expert = $verifier_commission_from_expert * $budget / 100;
+
+            $task_commission_from_client = $task_commission_from_client * $budget / 100;
+            $verifier_commission_from_client = $verifier_commission_from_client * $budget / 100;
+        }
+        $total_payable = $budget +($task_commission_from_client+$verifier_commission_from_client);
+
         DB::beginTransaction();
         $tasks_proposal = Tasks_proposals::create(array_merge(
             $validator->validated(),
@@ -797,7 +812,12 @@ class TasksController extends Controller
                 'task_id' => $request->task_id,
                 'subject' => $request->subject,
                 'problem_statement' => $request->problem_statement,
-                'budget' => $request->budget,
+                'budget' => $budget,
+                'task_commission_from_expert' => $task_commission_from_expert,
+                'verifier_commission_from_expert' => $verifier_commission_from_expert,
+                'task_commission_from_client' => $task_commission_from_client,
+                'verifier_commission_from_client' => $verifier_commission_from_client,
+                'total_payable' => $total_payable,
                 'description' => isset($request->description) ? $request->description : ''
             ]
         ));
@@ -944,12 +964,12 @@ class TasksController extends Controller
         $token = $request->token;
         $member_record = Members::where('token', '=', $token)->select('members.*', 'experts.first_name', 'experts.last_name')
             ->leftjoin('experts', 'experts.member_id', '=', 'members.id')->first();
-        if (!$member_record || empty($token)) {
-            return response()->json([
-                'message' => 'invalid token',
-                'status' => 405,
-            ], 400);
-        }
+//        if (!$member_record || empty($token)) {
+//            return response()->json([
+//                'message' => 'invalid token',
+//                'status' => 405,
+//            ], 400);
+//        }
         $task = Tasks::where('tasks.id', '=', $request->task_id)
             ->select('tasks.*', 'skills.name as skill_name')
             ->leftjoin('skills', 'skills.id', '=', 'tasks.skill_id')->first();
@@ -970,14 +990,15 @@ class TasksController extends Controller
         $task_detail = [
             'task_id' => $task->id,
             'days' => $task->days,
-            'status' => $task_status[$task->status],
+            'status' => $task->status,
             'description' => $task->description,
             'document' => $task->document,
             'skill_name' => $task->skill_name,
-            'created_at'=>$task->created_at
+            'created_at' => $task->created_at
         ];
 
         $expert_detail = [
+            'member_id' => $task->experts->member_id,
             'name' => $task->experts->first_name . ' ' . $task->experts->last_name,
             'email' => $task->experts->email,
             'mobile_number' => $task->experts->mobile_number,
@@ -986,6 +1007,7 @@ class TasksController extends Controller
 
 
         $client_detail = [
+            'member_id' => $task->clients->member_id,
             'name' => $task->clients->first_name . ' ' . $task->clients->last_name,
             'email' => $task->clients->email,
             'mobile_number' => $task->clients->mobile_number,
@@ -994,45 +1016,252 @@ class TasksController extends Controller
 
 
         $accepted_proposal = Tasks_proposals::where(['task_id' => $task->id, 'member_id' => $task->expert_id])
-            ->select('subject', 'problem_statement', 'budget', 'description','created_at')->first();
+            ->select('subject', 'problem_statement', 'budget','total_payable', 'description', 'created_at')->first();
+
+        $ratings = Tasks_rating::where(['task_id' => $task->id])
+            ->select('tasks_ratings.*', 'from_client.first_name as from_name', 'to_client.first_name as to_name')
+            ->leftjoin('clients as from_client', 'from_client.member_id', '=', 'tasks_ratings.from_member_id')
+            ->leftjoin('clients as to_client', 'to_client.member_id', '=', 'tasks_ratings.to_member_id')->get();
+
+
+        $task_accept_history=Tasks_status_histories::where(['status'=>1,'task_id'=>$task->id])->select('created_at')->first();
+
+        if($task_accept_history){
+            $task_detail['start_time']=$task_accept_history->created_at;
+        }
+
 
         $task_updates = Tasks_updates::where(['task_id' => $task->id])
-            ->select('id','note', 'document', 'created_at')
+            ->select('id', 'note', 'document', 'created_at')
             ->with('comments:id,comment,member_id,update_id')
 //            ->with(['comments' => function($query) {
 //                $query->select(['id', 'comment','member_id']);
 //            }])
-            ->first();
+            ->get();
         return response()->json([
             'message' => 'successfully Update',
             'task_detail' => $task_detail,
             'expert' => $expert_detail,
             'client' => $client_detail,
             'proposal' => $accepted_proposal,
-            'updates' => $task_updates
+            'updates' => $task_updates,
+            'ratings'=>$ratings
         ], 201);
 
 
     }
 
 
+    public function api_complete_task(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'task_id' => 'required'
+        ]);
+
+
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->select('members.*', 'clients.first_name', 'clients.last_name')
+            ->leftjoin('clients', 'clients.member_id', '=', 'members.id')->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token',
+                'status' => 405,
+            ], 400);
+        }
+
+
+        $task = Tasks::where('id', '=', $request->task_id)->select('*')->first();
+        if (!$task) {
+            return response()->json([
+                'message' => 'Task not found'
+            ], 404);
+        }
+        if ($task->client_id != $member_record->id) {
+            return response()->json([
+                'message' => 'You have not permission to complete this task'
+            ], 404);
+        }
+
+        if ($task->status == 4) {
+            return response()->json([
+                'message' => 'Task Already Completed'
+            ], 403);
+        }
+
+        DB::beginTransaction();
+        $tasks_update = Tasks::where('id', $task->id)
+            ->update(
+                [
+                    'status' => 4
+                ]
+            );
+
+        if ($tasks_update) {
+
+            Tasks_status_histories::create([
+                'task_id' => $task->id,
+                'status' => 4,
+                'member_id' => $member_record->id
+            ]);
+
+
+            $notification = Notifications::create(
+                [
+                    'primary_id' => $task->id,
+                    'title' => "Task Completed",
+                    'message' => 'Task #' . $task->id . ' Completed',
+                    'type' => 4,
+                    'member_id' => $task->expert_id,
+                    'from_member_id' => $member_record->id
+
+                ]
+            );
+
+            $accepted_proposal = Tasks_proposals::where(['task_id' => $task->id, 'member_id' => $task->expert_id])
+                ->select('subject', 'problem_statement', 'budget','total_payable', 'description', 'created_at'
+                ,'task_commission_from_expert','verifier_commission_from_expert')->first();
+
+            if (!$accepted_proposal) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Proposal not found'
+                ], 400);
+            }
+
+            $expert_amount = $accepted_proposal->budget - ($accepted_proposal->task_commission_from_expert + $accepted_proposal->verifier_commission_from_expert);
+
+            $transaction = Transactions::create(
+                [
+                    'primary_id' => $task->id,
+                    'primary_table' => (new Tasks)->getTable(),
+                    'type' => 0,
+                    'status' => 0,
+                    'debit' => $expert_amount,
+                    'member_id' => $task->expert_id,
+                    'description' => 'Task Completed, Task #' . $task->id,
+                    'trans_purpose' => 3
+                ]
+            );
 
 
 
 
+            $date = date('Y-m-d H:i');
+            $date = new DateTime($date);
+            $date->modify('+' . 1 . ' day');
+            $date=$date->format('Y-m-d H:i');
+
+            $tasks_transaction_release = Tasks_transaction_release::create(
+                [
+                    'task_id' => $task->id,
+                    'date' => $date,
+                    'trans_id' => $transaction->id,
+                    'status' => 0
+                ]
+            );
 
 
+            DB::commit();
+            return response()->json([
+                'message' => 'Successfully completed'
+            ], 201);
+
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
 
 
+    }
+
+    public function api_add_task_rating(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'task_id' => 'required',
+            'rate' => 'required',
+            'remarks' => 'required',
+        ]);
 
 
+        if ($validator->fails()) {
+            $validators = $validator->errors()->toArray();
+            $data = [
+                'validations' => $validators,
+                'message' => $validator->errors()->first()
+            ];
+            return response()->json($data, 400);
+        }
+
+        $token = $request->token;
+        $member_record = Members::where('token', '=', $token)->select('members.*')->first();
+        if (!$member_record || empty($token)) {
+            return response()->json([
+                'message' => 'invalid token',
+                'status' => 405,
+            ], 400);
+        }
 
 
+        $task = Tasks::where('id', '=', $request->task_id)->select('*')->first();
+        if (!$task) {
+            return response()->json([
+                'message' => 'Task not found'
+            ], 404);
+        }
+        if ($task->client_id != $member_record->id && $task->expert_id != $member_record->id) {
+            return response()->json([
+                'message' => 'You have not permission to rate this task'
+            ], 404);
+        }
+        $task_rating = Tasks_rating::where(['task_id' => $task->id, 'from_member_id' => $member_record->id])->select('id')->first();
+        if ($task_rating) {
+            return response()->json([
+                'message' => 'Already rate this task'
+            ], 403);
+        }
 
+        DB::beginTransaction();
 
+        $to_member_id=0;
 
+        if($task->client_id==$member_record->id){
+            $to_member_id=$task->expert_id;
+        }elseif($task->expert_id==$member_record->id){
+            $to_member_id=$task->client_id;
+        }
+        $rating = Tasks_rating::create([
+            'task_id' => $task->id,
+            'from_member_id' => $member_record->id,
+            'to_member_id' => $to_member_id,
+            'rate' => $request->rate,
+            'remarks' => $request->remarks
+        ]);
 
-
+        if ($rating) {
+            DB::commit();
+            return response()->json([
+                'message' => 'Successfully submited'
+            ], 201);
+        } else {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'some thing wrong'
+            ], 400);
+        }
+    }
 
 
     public function api_task_update_comment_add(Request $request)
@@ -1063,7 +1292,7 @@ class TasksController extends Controller
             ], 400);
         }
 
-        $tasks_update=Tasks_updates::where('id',$request->update_id)->first();
+        $tasks_update = Tasks_updates::where('id', $request->update_id)->first();
 
         if (!$tasks_update) {
             return response()->json([
@@ -1099,7 +1328,7 @@ class TasksController extends Controller
             $notification = Notifications::create(
                 [
                     'primary_id' => $comment->id,
-                    'title' => "Proposal Received From " . $member_record->first_name . " " . $member_record->last_name,
+                    'title' =>$member_record->first_name . " " . $member_record->last_name. " Comment Task # ".$task->id ,
                     'message' => $comment->comment,
                     'type' => 9,
                     'member_id' => $task->expert_id,
@@ -1121,6 +1350,8 @@ class TasksController extends Controller
         }
 
     }
+
+
 
 
 }

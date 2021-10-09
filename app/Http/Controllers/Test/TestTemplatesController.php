@@ -20,6 +20,7 @@ class TestTemplatesController extends Controller
 
     public function __construct()
     {
+        parent::__construct();
         $this->middleware('can:test/templates-view')->only(['get_data','get']);
         $this->middleware('can:test/templates-add')->only(['add']);
         $this->middleware('can:test/templates-edit')->only(['update']);

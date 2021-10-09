@@ -18,11 +18,9 @@ use Validator;
 
 class ExpertsController extends Controller
 {
-    protected $global;
-
     public function __construct()
     {
-        $this->global = config('app.global');
+        parent::__construct();
         $this->middleware('can:experts/experts-view')->only(['get_data','get']);
         $this->middleware('can:experts/experts-add')->only(['add','addExpertEducation','addExpertSkills','addExpertTool']);
         $this->middleware('can:experts/experts-edit')->only(['update','status_change','updateEducation','changeExpertPassword']);
@@ -445,29 +443,6 @@ class ExpertsController extends Controller
     }
 
 
-    public function uploadfile_to_s3($base64, $file_name, $path)
-    {
-
-        $result = false;
-        if ($base64) {
-            //$base64 = $request->file;
-            $imageData = str_replace(' ', '+', $base64);
-            list($type, $imageData) = explode(';', $imageData);
-            list(, $extension) = explode('/', $type);
-            list(, $imageData) = explode(',', $imageData);
-            if ($extension == 'svg+xml') {
-                $extension = 'svg';
-            }
-            $name = $file_name . "." . $extension;
-            $imageData = base64_decode($imageData);
-
-            if (Storage::disk('s3')->put($path . '/' . $name, $imageData, 'public')) {
-                $result = $this->global['aws_s3_base'] . $path . '/' . $name;
-            }
-
-        }
-        return $result;
-    }
 
 
     public function api_find_total_experts(Request $request)
@@ -1207,69 +1182,5 @@ class ExpertsController extends Controller
 
     }
 
-    public function api_change_profile(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'token' => 'required'
-        ]);
-
-        if ($validator->fails()) {
-            $validators = $validator->errors()->toArray();
-            $data = [
-                'validations' => $validators,
-                'message' => $validator->errors()->first()
-            ];
-            return response()->json($data, 400);
-        }
-
-
-        $token = $request->token;
-        $member_record = Members::where('token', '=', $token)->first();
-        if (!$member_record || empty($token)) {
-            return response()->json([
-                'message' => 'invalid token',
-                'status' => 405
-            ], 400);
-        }
-
-        $expert = Experts::where(['member_id' => $member_record->id])->first();
-        if (!$expert) {
-            return response()->json([
-                'message' => 'Expert not found',
-                'status' => 400
-            ], 400);
-        }
-
-        $avatar_name = $member_record->username . '-' . $member_record->id;
-        $avatar = '';
-        if ($request->avatar) {
-            $avatar = $this->uploadfile_to_s3($request->avatar, $avatar_name, 'avatars');
-        } else {
-            return response()->json([
-                'message' => 'Avatar not found',
-                'status' => 400
-            ], 400);
-        }
-
-        DB::beginTransaction();
-        $expert_result = Experts::where('id', $expert->id)
-            ->update(['avatar' => $avatar]);
-        if ($expert_result) {
-
-            DB::commit();
-            return response()->json([
-                'message' => 'Profile Successfully Update',
-                'status' => 201
-            ], 201);
-        } else {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Some thing wrong',
-                'status' => 400
-            ], 400);
-        }
-
-
-    }
 
 }

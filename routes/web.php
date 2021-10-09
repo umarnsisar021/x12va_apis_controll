@@ -18,14 +18,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/home', function () {
 
         Artisan::call('config:cache');
-    Artisan::call('view:clear');
-    Artisan::call('route:clear');
-    Artisan::call('route:cache');
-    Artisan::call('config:clear');
-    Artisan::call('config:cache');
-    Artisan::call('cache:clear');
-    Artisan::call('optimize');
-    print_r(2);die;;
+//    Artisan::call('view:clear');
+//    Artisan::call('route:clear');
+//    Artisan::call('route:cache');
+//    Artisan::call('config:clear');
+//    Artisan::call('config:cache');
+//    Artisan::call('cache:clear');
+//    Artisan::call('optimize');
+    print_r(env('APP_URL'));die;;
     return view('welcome');
 });
 

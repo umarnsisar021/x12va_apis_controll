@@ -25,6 +25,11 @@ class Tasks_proposals extends Model
         'subject',
         'problem_statement',
         'budget',
+        'task_commission_from_client',
+        'task_commission_from_expert',
+        'verifier_commission_from_client',
+        'verifier_commission_from_expert',
+        'total_payable',
         'description',
         'status'
     ];

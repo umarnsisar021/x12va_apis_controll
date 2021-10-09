@@ -154,6 +154,8 @@ Route::group([
                 Route::post('/users/get', [UsersController::class, 'get']);
                 Route::post('/users/get_roles', [UsersController::class, 'get_roles']);
 
+
+
             });
     });
 
@@ -161,6 +163,8 @@ Route::group([
         'prefix' => 'web'
     ],
         function ($router) {
+            Route::post('/config/get_company_config', [SystemSettingsController::class, 'get_company_config']);
+
             //Clients
             Route::post('/clients/register_new_client', [ClientsController::class, 'api_register']);
             Route::post('/clients/login', [ClientsController::class, 'api_login']);
@@ -178,12 +182,18 @@ Route::group([
             Route::post('/clients/get_client_proposals', [TasksController::class, 'api_get_client_proposals']);
             Route::post('/clients/get_proposal_by_id', [TasksController::class, 'api_get_proposal_by_id']);
             Route::post('/clients/assign_task', [TasksController::class, 'api_assign_task']);
+            Route::post('/clients/complete_task', [TasksController::class, 'api_complete_task']);
 
 
             //Account
-            Route::post('/clients/add_payment', [TransactionsController::class, 'api_add_payment']);
+            Route::post('/clients/add_payment_by_proposal', [TransactionsController::class, 'api_add_payment_by_proposal']);
             Route::post('/transaction/get_transaction_history', [TransactionsController::class, 'api_get_transaction_history']);
             Route::post('/transaction/get_wallet_summary', [TransactionsController::class, 'api_get_wallet_summary']);
+            Route::post('/transaction/api_payout', [TransactionsController::class, 'api_payout']);
+            Route::get('/transaction/api_return', [TransactionsController::class, 'api_return']);
+            Route::post('/transaction/add_payment', [TransactionsController::class, 'api_add_payment']);
+            Route::post('/transaction/withdrawal', [TransactionsController::class, 'api_withdrawal']);
+            Route::post('/transaction/stripe_login', [TransactionsController::class, 'api_stripe_login']);
 
 
             //Experts
@@ -203,7 +213,6 @@ Route::group([
             Route::post('/experts/get_my_languages', [ExpertsController::class, 'api_get_my_languages']);
             Route::post('/experts/get_my_educations', [ExpertsController::class, 'api_get_my_educations']);
             Route::post('/experts/send_proposal_task', [TasksController::class, 'api_send_proposal_task']);
-            Route::post('/experts/change_profile', [ExpertsController::class, 'api_change_profile']);
             Route::post('/experts/get_expert_tasks', [TasksController::class, 'api_get_expert_tasks']);
             Route::post('/experts/get_expert_new_tasks', [TasksController::class, 'api_get_expert_new_tasks']);
             Route::post('/experts/get_proposal_by_id', [TasksController::class, 'api_get_proposal_by_id_expert']);
@@ -212,13 +221,14 @@ Route::group([
 
             Route::post('/experts/update_task', [TasksController::class, 'api_update_task']);
 
+            Route::post('/member/change_profile', [ClientsController::class, 'api_change_profile']);
+
 
             //Task
             Route::post('/tasks/get_task_by_id', [TasksController::class, 'api_get_task_by_id']);
-
             Route::post('/tasks/get_task_detail', [TasksController::class, 'api_get_task_detail']);
-
             Route::post('/tasks/task_update_comment_add', [TasksController::class, 'api_task_update_comment_add']);
+            Route::post('/tasks/add_task_rating', [TasksController::class, 'api_add_task_rating']);
 
 
             //Test
@@ -249,8 +259,11 @@ Route::get('/clear', function () {
 //    Artisan::call('config:clear');
 //    Artisan::call('config:cache');
 //    Artisan::call('cache:clear');
+//    Artisan::call('config:cache');
 
     Artisan::call('optimize');
+    print_r(env('APP_URL'));die;;
+
     return "Cleared!";
 });
 Route::get('/clear-cache', function () {

@@ -28,7 +28,8 @@ class Transactions extends Model
         'credit',
         'description',
         'trans_purpose',
-        'status'
+        'status',
+        'reference_no'
     ];
 
 

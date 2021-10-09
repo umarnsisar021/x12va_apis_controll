@@ -32,7 +32,10 @@ class Members extends Authenticatable implements JWTSubject
         'facebook_id',
         'twitter_id',
         'signup_with',
-        'token'
+        'token',
+        'stripe_id',
+        'stripe_connect_ac_id',
+        'stripe_verified'
     ];
 
     /**
@@ -97,6 +100,7 @@ class Members extends Authenticatable implements JWTSubject
             return $trans->debit - $trans->credit;
         });
     }
+
 
     public function getDebitAttribute(){
         return $this->transactions->sum(function($trans){

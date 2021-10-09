@@ -14,6 +14,7 @@ class SkillsController extends Controller
 
     public function __construct()
     {
+        parent::__construct();
         $this->middleware('can:apps/skills-view')->only(['get_data','get']);
         $this->middleware('can:apps/skills-add')->only(['add']);
         $this->middleware('can:apps/skills-edit')->only(['update']);

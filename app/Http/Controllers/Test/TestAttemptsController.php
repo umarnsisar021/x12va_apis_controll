@@ -20,6 +20,7 @@ class TestAttemptsController extends Controller
 {
     public function __construct()
     {
+        parent::__construct();
         $this->middleware('can:test/attempts-view')->only(['get_data','get']);
         $this->middleware('can:test/attempts-add')->only(['add']);
         $this->middleware('can:test/attempts-edit')->only(['update']);
